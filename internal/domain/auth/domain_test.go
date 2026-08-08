@@ -4,45 +4,54 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 )
 
-func TestNewUser(t *testing.T) {
+type DomainTestSuite struct {
+	suite.Suite
+}
+
+func (s *DomainTestSuite) TestNewUser() {
 	u, err := auth.NewUser("test@example.com", "password123", "Test User")
-	require.NoError(t, err)
-	assert.Equal(t, "test@example.com", u.Email)
-	assert.Equal(t, "Test User", u.DisplayName)
-	assert.Equal(t, auth.GenderOther, u.Gender)
-	assert.Equal(t, 1, u.Version)
+	s.Require().NoError(err)
+	s.Equal("test@example.com", u.Email)
+	s.Equal("Test User", u.DisplayName)
+	s.Equal(auth.GenderOther, u.Gender)
+	s.Equal(1, u.Version)
 }
 
-func TestNewUser_InvalidEmail(t *testing.T) {
+func (s *DomainTestSuite) TestNewUser_InvalidEmail() {
 	_, err := auth.NewUser("notanemail", "password123", "Test User")
-	assert.ErrorIs(t, err, auth.ErrInvalidEmail)
+	s.ErrorIs(err, auth.ErrInvalidEmail)
 }
 
-func TestNewUser_ShortPassword(t *testing.T) {
+func (s *DomainTestSuite) TestNewUser_ShortPassword() {
 	_, err := auth.NewUser("test@example.com", "1234567", "Test User")
-	assert.ErrorIs(t, err, auth.ErrInvalidPassword)
+	s.ErrorIs(err, auth.ErrInvalidPassword)
 }
 
-func TestNewUser_EmptyName(t *testing.T) {
+func (s *DomainTestSuite) TestNewUser_EmptyName() {
 	_, err := auth.NewUser("test@example.com", "password123", "")
-	assert.Error(t, err)
+	s.Error(err)
 }
 
-func TestUser_ToProfile_Self(t *testing.T) {
+func (s *DomainTestSuite) TestUser_ToProfile_Self() {
 	u, _ := auth.NewUser("a@b.com", "password123", "Alice")
 	profile := u.ToProfile(u.ID)
-	assert.Equal(t, "a@b.com", *profile.Email)
+	s.Equal("a@b.com", *profile.Email)
 }
 
-func TestUser_ToProfile_Other(t *testing.T) {
+func (s *DomainTestSuite) TestUser_ToProfile_Other() {
 	u, _ := auth.NewUser("a@b.com", "password123", "Alice")
 	otherID := uuid.New()
 	profile := u.ToProfile(otherID)
-	assert.Nil(t, profile.Email)
+	s.Nil(profile.Email)
+}
+
+func TestDomainSuite(t *testing.T) {
+	t.Parallel()
+
+	suite.Run(t, new(DomainTestSuite))
 }

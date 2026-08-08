@@ -1,3 +1,11 @@
+// @title OneRep Auth API
+// @version 1.0
+// @description Authentication service for OneRep gym training app
+// @host localhost:8080
+// @BasePath /v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 package main
 
 import (

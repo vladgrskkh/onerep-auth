@@ -1,4 +1,4 @@
-.PHONY: run test lint migrate-up migrate-down migrate-create
+.PHONY: run test lint migrate-up migrate-down migrate-create swagger
 
 run:
 	AUTH_PORT=8080 \
@@ -20,3 +20,6 @@ migrate-down:
 
 migrate-create:
 	goose -dir migrations create $(NAME) sql
+
+swagger:
+	swag init --parseDependency -g cmd/server/main.go -o docs/

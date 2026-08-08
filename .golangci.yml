@@ -242,6 +242,8 @@ linters:
     rules:
       - source: 'TODO'
         linters: [godot]
+      - source: '@Router'
+        linters: [godot]
       - text: 'exported: type name will be used as .+ by other packages, and that stutters'
         linters: [revive]
       - text: 'should have a package comment'

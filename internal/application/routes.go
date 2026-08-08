@@ -6,7 +6,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 
+	_ "github.com/vladgrskkh/onerep-auth/docs" // swagger docs
 	authhandler "github.com/vladgrskkh/onerep-auth/internal/handler/auth"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/middleware"
 	userhandler "github.com/vladgrskkh/onerep-auth/internal/handler/user"
@@ -26,6 +28,7 @@ func RegisterRoutes(
 
 	r.Get("/health", healthHandler)
 	r.Get("/.well-known/jwks.json", jwksHandler)
+	r.Get("/docs/*", httpSwagger.WrapHandler)
 
 	authHandler.RegisterRoutes(r)
 

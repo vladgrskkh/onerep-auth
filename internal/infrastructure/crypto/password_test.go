@@ -3,21 +3,35 @@ package crypto_test
 import (
 	"testing"
 
-	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/crypto"
+	"github.com/stretchr/testify/suite"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/crypto"
 )
 
-func TestPasswordHasher_HashAndCompare(t *testing.T) {
-	h := crypto.NewPasswordHasher()
-	hash, err := h.Hash("mypassword")
-	require.NoError(t, err)
-	assert.NotEmpty(t, hash)
+type PasswordTestSuite struct {
+	suite.Suite
 
-	err = h.Compare(hash, "mypassword")
-	require.NoError(t, err)
+	hasher crypto.PasswordHasher
+}
 
-	err = h.Compare(hash, "wrongpassword")
-	assert.Error(t, err)
+func (s *PasswordTestSuite) SetupTest() {
+	s.hasher = *crypto.NewPasswordHasher()
+}
+
+func (s *PasswordTestSuite) TestHashAndCompare() {
+	hash, err := s.hasher.Hash("mypassword")
+	s.Require().NoError(err)
+	s.NotEmpty(hash)
+
+	err = s.hasher.Compare(hash, "mypassword")
+	s.Require().NoError(err)
+
+	err = s.hasher.Compare(hash, "wrongpassword")
+	s.Error(err)
+}
+
+func TestPasswordSuite(t *testing.T) {
+	t.Parallel()
+
+	suite.Run(t, new(PasswordTestSuite))
 }

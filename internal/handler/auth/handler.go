@@ -33,6 +33,16 @@ func (h *AuthHandler) RegisterRoutes(r chi.Router) {
 	r.Post("/v1/auth/refresh", h.refresh)
 }
 
+// @Summary Register a new user
+// @Description Create a new account with email and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RegisterRequest true "Registration data"
+// @Success 201 {object} jwtsvc.TokenPair
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Router /auth/register [post]
 func (h *AuthHandler) register(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email       string `json:"email"`
@@ -53,6 +63,16 @@ func (h *AuthHandler) register(w http.ResponseWriter, r *http.Request) {
 	handler.WriteJSON(w, http.StatusCreated, pair)
 }
 
+// @Summary Login
+// @Description Authenticate with email and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.LoginRequest true "Login data"
+// @Success 200 {object} jwtsvc.TokenPair
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /auth/login [post]
 func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email    string `json:"email"`
@@ -72,6 +92,15 @@ func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
 	handler.WriteJSON(w, http.StatusOK, pair)
 }
 
+// @Summary Logout
+// @Description Invalidate refresh token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.LogoutRequest true "Logout data"
+// @Success 204
+// @Failure 400 {object} map[string]string
+// @Router /auth/logout [post]
 func (h *AuthHandler) logout(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		RefreshToken string `json:"refresh_token"`
@@ -89,6 +118,16 @@ func (h *AuthHandler) logout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// @Summary Refresh tokens
+// @Description Get a new token pair using a refresh token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RefreshRequest true "Refresh data"
+// @Success 200 {object} jwtsvc.TokenPair
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /auth/refresh [post]
 func (h *AuthHandler) refresh(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		RefreshToken string `json:"refresh_token"`

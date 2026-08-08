@@ -39,6 +39,17 @@ func (h *UserHandler) RegisterRoutes(r chi.Router) {
 	r.Patch("/v1/users/{id}", h.updateProfile)
 }
 
+// @Summary Get user profile
+// @Description Get a user's public profile (email visible only to owner)
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {object} authdomain.UserProfile
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Security BearerAuth
+// @Router /users/{id} [get]
 func (h *UserHandler) getProfile(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -57,6 +68,18 @@ func (h *UserHandler) getProfile(w http.ResponseWriter, r *http.Request) {
 	handler.WriteJSON(w, http.StatusOK, profile)
 }
 
+// @Summary Update user profile
+// @Description Update the authenticated user's profile
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Param request body userdomain.UpdateProfileInput true "Profile data"
+// @Success 200 {object} authdomain.UserProfile
+// @Failure 400 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Security BearerAuth
+// @Router /users/{id} [patch]
 func (h *UserHandler) updateProfile(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
