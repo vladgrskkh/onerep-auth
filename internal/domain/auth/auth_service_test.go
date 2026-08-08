@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/vladgrskkh/onerep-auth/internal/auth"
-	"github.com/vladgrskkh/onerep-auth/internal/auth/mocks"
+	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
+	"github.com/vladgrskkh/onerep-auth/internal/domain/auth/mocks"
 	"github.com/vladgrskkh/onerep-auth/internal/domain"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/crypto"
 	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"

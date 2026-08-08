@@ -11,14 +11,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	redislib "github.com/redis/go-redis/v9"
 
-	"github.com/vladgrskkh/onerep-auth/internal/auth"
+	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 	"github.com/vladgrskkh/onerep-auth/internal/config"
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/crypto"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/postgres"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/redis"
-	"github.com/vladgrskkh/onerep-auth/internal/user"
+	"github.com/vladgrskkh/onerep-auth/internal/domain/user"
 )
 
 type App struct {

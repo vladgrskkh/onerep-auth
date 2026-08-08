@@ -3,7 +3,7 @@ package user
 import (
 	"time"
 
-	"github.com/vladgrskkh/onerep-auth/internal/auth"
+	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 )
 
 type UpdateProfileInput struct {

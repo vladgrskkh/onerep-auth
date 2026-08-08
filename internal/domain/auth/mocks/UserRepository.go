@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	auth "github.com/vladgrskkh/onerep-auth/internal/auth"
+	auth "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 
 	mock "github.com/stretchr/testify/mock"
 

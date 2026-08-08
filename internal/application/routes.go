@@ -7,9 +7,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 
-	"github.com/vladgrskkh/onerep-auth/internal/auth"
+	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/middleware"
-	"github.com/vladgrskkh/onerep-auth/internal/user"
+	"github.com/vladgrskkh/onerep-auth/internal/domain/user"
 )
 
 func RegisterRoutes(
