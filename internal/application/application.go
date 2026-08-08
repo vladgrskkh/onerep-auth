@@ -11,14 +11,16 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	redislib "github.com/redis/go-redis/v9"
 
-	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 	"github.com/vladgrskkh/onerep-auth/internal/config"
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
+	authhandler "github.com/vladgrskkh/onerep-auth/internal/handler/auth"
+	userhandler "github.com/vladgrskkh/onerep-auth/internal/handler/user"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/crypto"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/postgres"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/redis"
-	"github.com/vladgrskkh/onerep-auth/internal/domain/user"
+	authservice "github.com/vladgrskkh/onerep-auth/internal/service/auth"
+	userservice "github.com/vladgrskkh/onerep-auth/internal/service/user"
 )
 
 type App struct {
@@ -85,16 +87,16 @@ func (a *App) Run(ctx context.Context) error {
 	}
 	tokenStore := redis.NewTokenStore(redisClient, a.cfg.RefreshTokenTTL)
 
-	authSvc := auth.NewAuthService(userRepo, *hasher, *tm, tokenStore)
-	userSvc := user.NewUserService(userRepo, userRepo)
+	authSvc := authservice.NewAuthService(userRepo, *hasher, *tm, tokenStore)
+	userSvc := userservice.NewUserService(userRepo, userRepo)
 
 	r := chi.NewRouter()
 
-	authHandler := auth.NewAuthHandler(authSvc)
-	userHandler := user.NewUserHandler(userSvc)
+	authH := authhandler.NewAuthHandler(authSvc)
+	userH := userhandler.NewUserHandler(userSvc)
 	jwksHandler := handler.JWKSHandler(tm.PublicKey)
 
-	RegisterRoutes(r, authHandler, userHandler, jwksHandler, tm, a.logger)
+	RegisterRoutes(r, authH, userH, jwksHandler, tm, a.logger)
 
 	a.server = &http.Server{
 		Addr:              ":" + a.cfg.Port,

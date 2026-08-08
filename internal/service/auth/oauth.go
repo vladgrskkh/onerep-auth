@@ -6,26 +6,27 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
+	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
+	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/oauth"
 )
 
 type OAuthAccountRepository interface {
 	Create(
 		ctx context.Context,
-		account OAuthAccount,
-	) (OAuthAccount, error)
+		account authdomain.OAuthAccount,
+	) (authdomain.OAuthAccount, error)
 	FindByProviderID(
 		ctx context.Context,
-		provider OAuthProvider,
+		provider authdomain.OAuthProvider,
 		providerUserID string,
-	) (OAuthAccount, error)
+	) (authdomain.OAuthAccount, error)
 }
 
 type OAuthService struct {
 	users         UserRepository
 	oauthAccounts OAuthAccountRepository
-	tokens        jwt.TokenManager
+	tokens        jwtsvc.TokenManager
 	tokenStore    TokenStorer
 	googleAdapter *oauth.GoogleAdapter
 }
@@ -33,7 +34,7 @@ type OAuthService struct {
 func NewOAuthService(
 	users UserRepository,
 	oauthAccounts OAuthAccountRepository,
-	tokens jwt.TokenManager,
+	tokens jwtsvc.TokenManager,
 	tokenStore TokenStorer,
 	googleAdapter *oauth.GoogleAdapter,
 ) *OAuthService {
@@ -46,11 +47,11 @@ func NewOAuthService(
 	}
 }
 
-func (s *OAuthService) Login(ctx context.Context, provider OAuthProvider, code string) (TokenPair, error) {
+func (s *OAuthService) Login(ctx context.Context, provider authdomain.OAuthProvider, code string) (TokenPair, error) {
 	switch provider {
-	case OAuthGoogle:
+	case authdomain.OAuthGoogle:
 		return s.googleLogin(ctx, code)
-	case OAuthApple:
+	case authdomain.OAuthApple:
 		return TokenPair{}, fmt.Errorf("apple oauth not yet implemented")
 	default:
 		return TokenPair{}, fmt.Errorf("unsupported provider: %s", provider)
@@ -63,12 +64,12 @@ func (s *OAuthService) googleLogin(ctx context.Context, code string) (TokenPair,
 		return TokenPair{}, fmt.Errorf("oauth exchange: %w", err)
 	}
 
-	acc, err := s.oauthAccounts.FindByProviderID(ctx, OAuthGoogle, gu.ID)
+	acc, err := s.oauthAccounts.FindByProviderID(ctx, authdomain.OAuthGoogle, gu.ID)
 	if err == nil {
 		return s.issuePairForUser(ctx, acc.UserID)
 	}
 
-	user := UserFromOAuth(gu.Email, gu.Name)
+	user := authdomain.UserFromOAuth(gu.Email, gu.Name)
 	user.AvatarURL = &gu.Picture
 
 	createdUser, err := s.users.Create(ctx, *user)
@@ -79,7 +80,7 @@ func (s *OAuthService) googleLogin(ctx context.Context, code string) (TokenPair,
 		}
 	}
 
-	oa := NewOAuthAccount(createdUser.ID, OAuthGoogle, gu.ID)
+	oa := authdomain.NewOAuthAccount(createdUser.ID, authdomain.OAuthGoogle, gu.ID)
 	if _, err := s.oauthAccounts.Create(ctx, oa); err != nil {
 		return TokenPair{}, err
 	}

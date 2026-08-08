@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
-	"github.com/vladgrskkh/onerep-auth/internal/domain"
 )
 
 type OAuthAccountRepo struct {
@@ -39,7 +38,7 @@ func (r *OAuthAccountRepo) FindByProviderID(
 		FROM auth.oauth_accounts WHERE provider = $1 AND provider_user_id = $2
 	`, provider, providerUserID).Scan(&a.ID, &a.UserID, &a.Provider, &a.ProviderUserID, &a.CreatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return auth.OAuthAccount{}, domain.ErrUserNotFound
+		return auth.OAuthAccount{}, auth.ErrUserNotFound
 	}
 	return a, err
 }

@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
+	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 	"github.com/vladgrskkh/onerep-auth/internal/domain/auth/mocks"
-	"github.com/vladgrskkh/onerep-auth/internal/domain"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/crypto"
 	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
+	"github.com/vladgrskkh/onerep-auth/internal/service/auth"
 )
 
 func setupAuthService(t *testing.T) (*auth.AuthService, *mocks.UserRepository, *mocks.TokenStorer) {
@@ -42,8 +42,10 @@ func setupAuthService(t *testing.T) (*auth.AuthService, *mocks.UserRepository, *
 func TestAuthService_Register_Success(t *testing.T) {
 	svc, userRepo, tokenStore := setupAuthService(t)
 
-	userRepo.EXPECT().FindByEmail(mock.Anything, "test@example.com").Return(auth.User{}, domain.ErrUserNotFound)
-	userRepo.EXPECT().Create(mock.Anything, mock.AnythingOfType("auth.User")).Return(auth.User{}, nil)
+	userRepo.EXPECT().
+		FindByEmail(mock.Anything, "test@example.com").
+		Return(authdomain.User{}, authdomain.ErrUserNotFound)
+	userRepo.EXPECT().Create(mock.Anything, mock.AnythingOfType("auth.User")).Return(authdomain.User{}, nil)
 	tokenStore.EXPECT().Save(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	pair, err := svc.Register(context.Background(), "test@example.com", "password123", "Test User")
@@ -56,19 +58,19 @@ func TestAuthService_Register_Success(t *testing.T) {
 func TestAuthService_Register_DuplicateEmail(t *testing.T) {
 	svc, userRepo, _ := setupAuthService(t)
 
-	userRepo.EXPECT().FindByEmail(mock.Anything, "dupe@example.com").Return(auth.User{}, nil)
+	userRepo.EXPECT().FindByEmail(mock.Anything, "dupe@example.com").Return(authdomain.User{}, nil)
 
 	_, err := svc.Register(context.Background(), "dupe@example.com", "password123", "Test User")
-	assert.ErrorIs(t, err, domain.ErrEmailAlreadyExists)
+	assert.ErrorIs(t, err, authdomain.ErrEmailAlreadyExists)
 }
 
 func TestAuthService_Register_InvalidEmail(t *testing.T) {
 	svc, userRepo, _ := setupAuthService(t)
 
-	userRepo.EXPECT().FindByEmail(mock.Anything, "bad").Return(auth.User{}, domain.ErrUserNotFound)
+	userRepo.EXPECT().FindByEmail(mock.Anything, "bad").Return(authdomain.User{}, authdomain.ErrUserNotFound)
 
 	_, err := svc.Register(context.Background(), "bad", "password123", "Test User")
-	assert.ErrorIs(t, err, domain.ErrInvalidEmail)
+	assert.ErrorIs(t, err, authdomain.ErrInvalidEmail)
 }
 
 func TestAuthService_Login_Success(t *testing.T) {
@@ -78,7 +80,7 @@ func TestAuthService_Login_Success(t *testing.T) {
 	hash, _ := hasher.Hash("password123")
 	userID := uuid.Must(uuid.NewV7())
 
-	userRepo.EXPECT().FindByEmail(mock.Anything, "login@example.com").Return(auth.User{
+	userRepo.EXPECT().FindByEmail(mock.Anything, "login@example.com").Return(authdomain.User{
 		ID:           userID,
 		Email:        "login@example.com",
 		PasswordHash: &hash,
@@ -93,10 +95,12 @@ func TestAuthService_Login_Success(t *testing.T) {
 func TestAuthService_Login_InvalidCredentials(t *testing.T) {
 	svc, userRepo, _ := setupAuthService(t)
 
-	userRepo.EXPECT().FindByEmail(mock.Anything, "bad@example.com").Return(auth.User{}, domain.ErrUserNotFound)
+	userRepo.EXPECT().
+		FindByEmail(mock.Anything, "bad@example.com").
+		Return(authdomain.User{}, authdomain.ErrUserNotFound)
 
 	_, err := svc.Login(context.Background(), "bad@example.com", "wrong")
-	assert.ErrorIs(t, err, domain.ErrInvalidCredentials)
+	assert.ErrorIs(t, err, authdomain.ErrInvalidCredentials)
 }
 
 func TestAuthService_Logout_Success(t *testing.T) {
@@ -115,7 +119,9 @@ func TestAuthService_Refresh_Success(t *testing.T) {
 
 	tokenStore.EXPECT().Get(mock.Anything, "valid-refresh").Return(userID.String(), nil)
 	tokenStore.EXPECT().Delete(mock.Anything, "valid-refresh").Return(nil)
-	userRepo.EXPECT().FindByID(mock.Anything, userID).Return(auth.User{ID: userID, Email: "refresh@example.com"}, nil)
+	userRepo.EXPECT().
+		FindByID(mock.Anything, userID).
+		Return(authdomain.User{ID: userID, Email: "refresh@example.com"}, nil)
 	tokenStore.EXPECT().Save(mock.Anything, mock.Anything, userID.String()).Return(nil)
 
 	pair, err := svc.Refresh(context.Background(), "valid-refresh")
@@ -126,8 +132,8 @@ func TestAuthService_Refresh_Success(t *testing.T) {
 func TestAuthService_Refresh_TokenNotFound(t *testing.T) {
 	svc, _, tokenStore := setupAuthService(t)
 
-	tokenStore.EXPECT().Get(mock.Anything, "expired-refresh").Return("", domain.ErrTokenNotFound)
+	tokenStore.EXPECT().Get(mock.Anything, "expired-refresh").Return("", authdomain.ErrTokenNotFound)
 
 	_, err := svc.Refresh(context.Background(), "expired-refresh")
-	assert.ErrorIs(t, err, domain.ErrTokenNotFound)
+	assert.ErrorIs(t, err, authdomain.ErrTokenNotFound)
 }

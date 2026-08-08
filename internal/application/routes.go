@@ -7,15 +7,15 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 
-	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
+	authhandler "github.com/vladgrskkh/onerep-auth/internal/handler/auth"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/middleware"
-	"github.com/vladgrskkh/onerep-auth/internal/domain/user"
+	userhandler "github.com/vladgrskkh/onerep-auth/internal/handler/user"
 )
 
 func RegisterRoutes(
 	r chi.Router,
-	authHandler *auth.AuthHandler,
-	userHandler *user.UserHandler,
+	authHandler *authhandler.AuthHandler,
+	userHandler *userhandler.UserHandler,
 	jwksHandler http.HandlerFunc,
 	tokenValidator middleware.JWTValidator,
 	logger *slog.Logger,

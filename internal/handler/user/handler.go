@@ -8,7 +8,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
+	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
+	userdomain "github.com/vladgrskkh/onerep-auth/internal/domain/user"
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 )
 
@@ -17,12 +18,12 @@ type userProfileService interface {
 		ctx context.Context,
 		userID,
 		requesterID uuid.UUID,
-	) (auth.UserProfile, error)
+	) (authdomain.UserProfile, error)
 	UpdateProfile(
 		ctx context.Context,
 		userID uuid.UUID,
-		input UpdateProfileInput,
-	) (auth.UserProfile, error)
+		input userdomain.UpdateProfileInput,
+	) (authdomain.UserProfile, error)
 }
 
 type UserHandler struct {
@@ -69,7 +70,7 @@ func (h *UserHandler) updateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var input UpdateProfileInput
+	var input userdomain.UpdateProfileInput
 	if decErr := json.NewDecoder(r.Body).Decode(&input); decErr != nil {
 		handler.WriteError(w, http.StatusBadRequest, "invalid request body")
 		return

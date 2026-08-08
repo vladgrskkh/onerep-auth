@@ -5,15 +5,15 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/vladgrskkh/onerep-auth/internal/domain"
+	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/crypto"
 	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
 )
 
 type UserRepository interface {
-	Create(ctx context.Context, user User) (User, error)
-	FindByEmail(ctx context.Context, email string) (User, error)
-	FindByID(ctx context.Context, id uuid.UUID) (User, error)
+	Create(ctx context.Context, user authdomain.User) (authdomain.User, error)
+	FindByEmail(ctx context.Context, email string) (authdomain.User, error)
+	FindByID(ctx context.Context, id uuid.UUID) (authdomain.User, error)
 }
 
 type TokenStorer interface {
@@ -48,10 +48,10 @@ func NewAuthService(
 func (s *AuthService) Register(ctx context.Context, email, password, displayName string) (TokenPair, error) {
 	_, err := s.users.FindByEmail(ctx, email)
 	if err == nil {
-		return TokenPair{}, domain.ErrEmailAlreadyExists
+		return TokenPair{}, authdomain.ErrEmailAlreadyExists
 	}
 
-	user, err := NewUser(email, password, displayName)
+	user, err := authdomain.NewUser(email, password, displayName)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -82,15 +82,15 @@ func (s *AuthService) Register(ctx context.Context, email, password, displayName
 func (s *AuthService) Login(ctx context.Context, email, password string) (TokenPair, error) {
 	user, err := s.users.FindByEmail(ctx, email)
 	if err != nil {
-		return TokenPair{}, domain.ErrInvalidCredentials
+		return TokenPair{}, authdomain.ErrInvalidCredentials
 	}
 
 	if user.PasswordHash == nil {
-		return TokenPair{}, domain.ErrInvalidCredentials
+		return TokenPair{}, authdomain.ErrInvalidCredentials
 	}
 
 	if cmpErr := s.hasher.Compare(*user.PasswordHash, password); cmpErr != nil {
-		return TokenPair{}, domain.ErrInvalidCredentials
+		return TokenPair{}, authdomain.ErrInvalidCredentials
 	}
 
 	pair, err := s.tokens.IssueTokenPair(user.ID, user.Email)
@@ -112,7 +112,7 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (TokenPair, error) {
 	userIDStr, err := s.tokenStore.Get(ctx, refreshToken)
 	if err != nil {
-		return TokenPair{}, domain.ErrTokenNotFound
+		return TokenPair{}, authdomain.ErrTokenNotFound
 	}
 
 	if delErr := s.tokenStore.Delete(ctx, refreshToken); delErr != nil {

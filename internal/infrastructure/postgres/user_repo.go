@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
-	"github.com/vladgrskkh/onerep-auth/internal/domain"
 )
 
 type UserRepo struct {
@@ -38,7 +37,7 @@ func (r *UserRepo) FindByID(ctx context.Context, id uuid.UUID) (auth.User, error
 		FROM auth.users WHERE id = $1
 	`, id).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.DisplayName, &u.AvatarURL, &u.Gender, &u.BirthDate, &u.CreatedAt, &u.UpdatedAt, &u.Version)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return auth.User{}, domain.ErrUserNotFound
+		return auth.User{}, auth.ErrUserNotFound
 	}
 	return u, err
 }
@@ -50,7 +49,7 @@ func (r *UserRepo) FindByEmail(ctx context.Context, email string) (auth.User, er
 		FROM auth.users WHERE email = $1
 	`, email).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.DisplayName, &u.AvatarURL, &u.Gender, &u.BirthDate, &u.CreatedAt, &u.UpdatedAt, &u.Version)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return auth.User{}, domain.ErrUserNotFound
+		return auth.User{}, auth.ErrUserNotFound
 	}
 	return u, err
 }
@@ -67,7 +66,7 @@ func (r *UserRepo) Update(ctx context.Context, user auth.User) (auth.User, error
 		return auth.User{}, err
 	}
 	if tag.RowsAffected() == 0 {
-		return auth.User{}, domain.ErrUserNotFound
+		return auth.User{}, auth.ErrUserNotFound
 	}
 	return user, nil
 }

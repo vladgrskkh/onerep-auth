@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/vladgrskkh/onerep-auth/internal/domain"
+	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/postgres"
 
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ func TestUserRepo_CreateAndFindByID(t *testing.T) {
 	repo := postgres.NewUserRepo(pool)
 	ctx := context.Background()
 
-	u, err := domain.NewUser("findbyid@test.com", "password123", "Find Test")
+	u, err := auth.NewUser("findbyid@test.com", "password123", "Find Test")
 	require.NoError(t, err)
 
 	created, err := repo.Create(ctx, u)
@@ -47,7 +47,7 @@ func TestUserRepo_FindByEmail_NotFound(t *testing.T) {
 	ctx := context.Background()
 
 	_, err := repo.FindByEmail(ctx, "noone@test.com")
-	assert.ErrorIs(t, err, domain.ErrUserNotFound)
+	assert.ErrorIs(t, err, auth.ErrUserNotFound)
 }
 
 func TestUserRepo_Update_VersionConflict(t *testing.T) {
@@ -56,7 +56,7 @@ func TestUserRepo_Update_VersionConflict(t *testing.T) {
 	repo := postgres.NewUserRepo(pool)
 	ctx := context.Background()
 
-	u, _ := domain.NewUser("version@test.com", "password123", "Version Test")
+	u, _ := auth.NewUser("version@test.com", "password123", "Version Test")
 	created, _ := repo.Create(ctx, u)
 
 	created.DisplayName = "Updated"
@@ -66,5 +66,5 @@ func TestUserRepo_Update_VersionConflict(t *testing.T) {
 
 	updated.Version = 1
 	_, err = repo.Update(ctx, updated)
-	assert.ErrorIs(t, err, domain.ErrUserNotFound)
+	assert.ErrorIs(t, err, auth.ErrUserNotFound)
 }

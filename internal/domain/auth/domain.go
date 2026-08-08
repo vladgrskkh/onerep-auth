@@ -7,9 +7,25 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-
-	"github.com/vladgrskkh/onerep-auth/internal/domain"
 )
+
+var (
+	ErrUserNotFound       = errors.New("user not found")
+	ErrEmailAlreadyExists = errors.New("email already exists")
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrInvalidPassword    = errors.New("password must be at least 8 characters")
+	ErrInvalidEmail       = errors.New("invalid email format")
+	ErrOAuthAccountExists = errors.New("oauth account already linked")
+	ErrTokenNotFound      = errors.New("refresh token not found or expired")
+)
+
+type ValidationError struct {
+	Msg string
+}
+
+func (e *ValidationError) Error() string {
+	return e.Msg
+}
 
 type Gender string
 
@@ -66,15 +82,15 @@ func NewUser(email, password, displayName string) (User, error) {
 			for _, e := range validationErr {
 				switch e.Field() {
 				case "Email":
-					return User{}, domain.ErrInvalidEmail
+					return User{}, ErrInvalidEmail
 				case "Password":
-					return User{}, domain.ErrInvalidPassword
+					return User{}, ErrInvalidPassword
 				case "DisplayName":
-					return User{}, domain.ErrInvalidCredentials
+					return User{}, ErrInvalidCredentials
 				}
 			}
 		}
-		return User{}, domain.ErrInvalidEmail
+		return User{}, ErrInvalidEmail
 	}
 	now := time.Now()
 	return User{

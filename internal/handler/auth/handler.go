@@ -8,13 +8,14 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
+	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
 )
 
 type authService interface {
-	Register(ctx context.Context, email, password, displayName string) (TokenPair, error)
-	Login(ctx context.Context, email, password string) (TokenPair, error)
+	Register(ctx context.Context, email, password, displayName string) (jwtsvc.TokenPair, error)
+	Login(ctx context.Context, email, password string) (jwtsvc.TokenPair, error)
 	Logout(ctx context.Context, refreshToken string) error
-	Refresh(ctx context.Context, refreshToken string) (TokenPair, error)
+	Refresh(ctx context.Context, refreshToken string) (jwtsvc.TokenPair, error)
 }
 
 type AuthHandler struct {

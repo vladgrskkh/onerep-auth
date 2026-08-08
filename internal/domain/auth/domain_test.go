@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
-	"github.com/vladgrskkh/onerep-auth/internal/domain"
 )
 
 func TestNewUser(t *testing.T) {
@@ -22,12 +21,12 @@ func TestNewUser(t *testing.T) {
 
 func TestNewUser_InvalidEmail(t *testing.T) {
 	_, err := auth.NewUser("notanemail", "password123", "Test User")
-	assert.ErrorIs(t, err, domain.ErrInvalidEmail)
+	assert.ErrorIs(t, err, auth.ErrInvalidEmail)
 }
 
 func TestNewUser_ShortPassword(t *testing.T) {
 	_, err := auth.NewUser("test@example.com", "1234567", "Test User")
-	assert.ErrorIs(t, err, domain.ErrInvalidPassword)
+	assert.ErrorIs(t, err, auth.ErrInvalidPassword)
 }
 
 func TestNewUser_EmptyName(t *testing.T) {
