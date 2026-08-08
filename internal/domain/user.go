@@ -1,10 +1,11 @@
 package domain
 
 import (
+	"errors"
 	"strings"
 	"time"
-	"unicode/utf8"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
 
@@ -44,15 +45,34 @@ type OAuthAccount struct {
 	CreatedAt      time.Time
 }
 
+type RegisterInput struct {
+	Email       string `validate:"required,email"`
+	Password    string `validate:"required,min=8"`
+	DisplayName string `validate:"required,min=1"`
+}
+
+func (i RegisterInput) Validate() error {
+	validate := validator.New()
+	return validate.Struct(i)
+}
+
 func NewUser(email, password, displayName string) (User, error) {
-	if !strings.Contains(email, "@") {
+	input := RegisterInput{Email: email, Password: password, DisplayName: displayName}
+	if err := input.Validate(); err != nil {
+		var validationErr validator.ValidationErrors
+		if errors.As(err, &validationErr) {
+			for _, e := range validationErr {
+				switch e.Field() {
+				case "Email":
+					return User{}, ErrInvalidEmail
+				case "Password":
+					return User{}, ErrInvalidPassword
+				case "DisplayName":
+					return User{}, ErrInvalidCredentials
+				}
+			}
+		}
 		return User{}, ErrInvalidEmail
-	}
-	if utf8.RuneCountInString(password) < 8 {
-		return User{}, ErrInvalidPassword
-	}
-	if strings.TrimSpace(displayName) == "" {
-		return User{}, ErrInvalidCredentials
 	}
 	now := time.Now()
 	return User{

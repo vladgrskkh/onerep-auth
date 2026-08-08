@@ -18,21 +18,21 @@ import (
 	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
 )
 
-type mockUserStore struct {
+type mockUserRepository struct {
 	mock.Mock
 }
 
-func (m *mockUserStore) Create(ctx context.Context, user domain.User) (domain.User, error) {
+func (m *mockUserRepository) Create(ctx context.Context, user domain.User) (domain.User, error) {
 	args := m.Called(ctx, user)
 	return args.Get(0).(domain.User), args.Error(1)
 }
 
-func (m *mockUserStore) FindByEmail(ctx context.Context, email string) (domain.User, error) {
+func (m *mockUserRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
 	args := m.Called(ctx, email)
 	return args.Get(0).(domain.User), args.Error(1)
 }
 
-func (m *mockUserStore) FindByID(ctx context.Context, id uuid.UUID) (domain.User, error) {
+func (m *mockUserRepository) FindByID(ctx context.Context, id uuid.UUID) (domain.User, error) {
 	args := m.Called(ctx, id)
 	return args.Get(0).(domain.User), args.Error(1)
 }
@@ -56,7 +56,7 @@ func (m *mockTokenStore) Delete(ctx context.Context, token string) error {
 	return args.Error(0)
 }
 
-func setupAuthService(t *testing.T) (*application.AuthService, *mockUserStore, *mockTokenStore) {
+func setupAuthService(t *testing.T) (*application.AuthService, *mockUserRepository, *mockTokenStore) {
 	t.Helper()
 
 	key, err := jwtsvc.GenerateKeyPair()
@@ -65,22 +65,22 @@ func setupAuthService(t *testing.T) (*application.AuthService, *mockUserStore, *
 	require.NoError(t, err)
 	privPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privBytes})
 
-	jwtSvc, err := jwtsvc.NewService(string(privPEM), 15*time.Minute)
+	tm, err := jwtsvc.NewTokenManager(string(privPEM), 15*time.Minute)
 	require.NoError(t, err)
 
-	userStore := new(mockUserStore)
+	userRepo := new(mockUserRepository)
 	tokenStore := new(mockTokenStore)
 	hasher := *crypto.NewPasswordHasher()
 
-	svc := application.NewAuthService(userStore, userStore, userStore, hasher, *jwtSvc, tokenStore)
-	return svc, userStore, tokenStore
+	svc := application.NewAuthService(userRepo, hasher, *tm, tokenStore)
+	return svc, userRepo, tokenStore
 }
 
 func TestAuthService_Register_Success(t *testing.T) {
-	svc, userStore, tokenStore := setupAuthService(t)
+	svc, userRepo, tokenStore := setupAuthService(t)
 
-	userStore.On("FindByEmail", mock.Anything, "test@example.com").Return(domain.User{}, domain.ErrUserNotFound)
-	userStore.On("Create", mock.Anything, mock.AnythingOfType("domain.User")).Return(domain.User{}, nil)
+	userRepo.On("FindByEmail", mock.Anything, "test@example.com").Return(domain.User{}, domain.ErrUserNotFound)
+	userRepo.On("Create", mock.Anything, mock.AnythingOfType("domain.User")).Return(domain.User{}, nil)
 	tokenStore.On("Save", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	pair, err := svc.Register(context.Background(), "test@example.com", "password123", "Test User")
@@ -91,26 +91,26 @@ func TestAuthService_Register_Success(t *testing.T) {
 }
 
 func TestAuthService_Register_DuplicateEmail(t *testing.T) {
-	svc, userStore, _ := setupAuthService(t)
+	svc, userRepo, _ := setupAuthService(t)
 
 	existingUser := domain.User{}
-	userStore.On("FindByEmail", mock.Anything, "dupe@example.com").Return(existingUser, nil)
+	userRepo.On("FindByEmail", mock.Anything, "dupe@example.com").Return(existingUser, nil)
 
 	_, err := svc.Register(context.Background(), "dupe@example.com", "password123", "Test User")
 	assert.ErrorIs(t, err, domain.ErrEmailAlreadyExists)
 }
 
 func TestAuthService_Register_InvalidEmail(t *testing.T) {
-	svc, userStore, _ := setupAuthService(t)
+	svc, userRepo, _ := setupAuthService(t)
 
-	userStore.On("FindByEmail", mock.Anything, "bad").Return(domain.User{}, domain.ErrUserNotFound)
+	userRepo.On("FindByEmail", mock.Anything, "bad").Return(domain.User{}, domain.ErrUserNotFound)
 
 	_, err := svc.Register(context.Background(), "bad", "password123", "Test User")
 	assert.ErrorIs(t, err, domain.ErrInvalidEmail)
 }
 
 func TestAuthService_Login_Success(t *testing.T) {
-	svc, userStore, tokenStore := setupAuthService(t)
+	svc, userRepo, tokenStore := setupAuthService(t)
 
 	hasher := crypto.NewPasswordHasher()
 	hash, _ := hasher.Hash("password123")
@@ -120,7 +120,7 @@ func TestAuthService_Login_Success(t *testing.T) {
 	user.Email = "login@example.com"
 	user.PasswordHash = &hash
 
-	userStore.On("FindByEmail", mock.Anything, "login@example.com").Return(user, nil)
+	userRepo.On("FindByEmail", mock.Anything, "login@example.com").Return(user, nil)
 	tokenStore.On("Save", mock.Anything, mock.Anything, user.ID.String()).Return(nil)
 
 	pair, err := svc.Login(context.Background(), "login@example.com", "password123")
@@ -129,9 +129,9 @@ func TestAuthService_Login_Success(t *testing.T) {
 }
 
 func TestAuthService_Login_InvalidCredentials(t *testing.T) {
-	svc, userStore, _ := setupAuthService(t)
+	svc, userRepo, _ := setupAuthService(t)
 
-	userStore.On("FindByEmail", mock.Anything, "bad@example.com").Return(domain.User{}, domain.ErrUserNotFound)
+	userRepo.On("FindByEmail", mock.Anything, "bad@example.com").Return(domain.User{}, domain.ErrUserNotFound)
 
 	_, err := svc.Login(context.Background(), "bad@example.com", "wrong")
 	assert.ErrorIs(t, err, domain.ErrInvalidCredentials)
@@ -147,14 +147,14 @@ func TestAuthService_Logout_Success(t *testing.T) {
 }
 
 func TestAuthService_Refresh_Success(t *testing.T) {
-	svc, userStore, tokenStore := setupAuthService(t)
+	svc, userRepo, tokenStore := setupAuthService(t)
 
 	userID := uuid.Must(uuid.NewV7())
 	user := domain.User{ID: userID, Email: "refresh@example.com"}
 
 	tokenStore.On("Get", mock.Anything, "valid-refresh").Return(userID.String(), nil)
 	tokenStore.On("Delete", mock.Anything, "valid-refresh").Return(nil)
-	userStore.On("FindByID", mock.Anything, userID).Return(user, nil)
+	userRepo.On("FindByID", mock.Anything, userID).Return(user, nil)
 	tokenStore.On("Save", mock.Anything, mock.Anything, userID.String()).Return(nil)
 
 	pair, err := svc.Refresh(context.Background(), "valid-refresh")

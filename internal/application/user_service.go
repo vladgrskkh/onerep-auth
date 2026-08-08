@@ -41,7 +41,11 @@ type UpdateProfileInput struct {
 	AvatarURL   *string        `json:"avatar_url,omitempty"`
 }
 
-func (s *UserService) UpdateProfile(ctx context.Context, userID uuid.UUID, input UpdateProfileInput) (domain.UserProfile, error) {
+func (s *UserService) UpdateProfile(
+	ctx context.Context,
+	userID uuid.UUID,
+	input UpdateProfileInput,
+) (domain.UserProfile, error) {
 	user, err := s.finder.FindByID(ctx, userID)
 	if err != nil {
 		return domain.UserProfile{}, err

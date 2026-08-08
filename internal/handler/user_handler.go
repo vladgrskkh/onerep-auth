@@ -13,8 +13,16 @@ import (
 )
 
 type userProfileService interface {
-	GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (domain.UserProfile, error)
-	UpdateProfile(ctx context.Context, userID uuid.UUID, input application.UpdateProfileInput) (domain.UserProfile, error)
+	GetProfile(
+		ctx context.Context,
+		userID,
+		requesterID uuid.UUID,
+	) (domain.UserProfile, error)
+	UpdateProfile(
+		ctx context.Context,
+		userID uuid.UUID,
+		input application.UpdateProfileInput,
+	) (domain.UserProfile, error)
 }
 
 type UserHandler struct {

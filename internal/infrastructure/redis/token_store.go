@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -34,7 +35,7 @@ func (s *TokenStore) Save(ctx context.Context, token string, userID string) erro
 func (s *TokenStore) Get(ctx context.Context, token string) (string, error) {
 	key := refreshKey(token)
 	data, err := s.client.Get(ctx, key).Bytes()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return "", fmt.Errorf("token not found")
 	}
 	if err != nil {

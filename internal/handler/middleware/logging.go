@@ -24,6 +24,7 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 
 type responseWriter struct {
 	http.ResponseWriter
+
 	status int
 }
 

@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestService_IssueAndValidate(t *testing.T) {
+func TestTokenManager_IssueAndValidate(t *testing.T) {
 	key, err := infrajwt.GenerateKeyPair()
 	require.NoError(t, err)
 
@@ -22,20 +22,20 @@ func TestService_IssueAndValidate(t *testing.T) {
 	require.NoError(t, err)
 	privPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privBytes})
 
-	svc, err := infrajwt.NewService(string(privPEM), 15*time.Minute)
+	tm, err := infrajwt.NewTokenManager(string(privPEM), 15*time.Minute)
 	require.NoError(t, err)
 
 	user := domain.User{}
 	user.ID = uuid.Must(uuid.NewV7())
 	user.Email = "test@example.com"
 
-	pair, err := svc.IssueTokenPair(user)
+	pair, err := tm.IssueTokenPair(user)
 	require.NoError(t, err)
 	assert.NotEmpty(t, pair.AccessToken)
 	assert.NotEmpty(t, pair.RefreshToken)
 	assert.Equal(t, 900, pair.ExpiresIn)
 
-	id, err := infrajwt.GetUserIDFromToken(pair.AccessToken, svc.PublicKeyPEM())
+	id, err := infrajwt.GetUserIDFromToken(pair.AccessToken, tm.PublicKeyPEM())
 	require.NoError(t, err)
 	assert.Equal(t, user.ID, id)
 }

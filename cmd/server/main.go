@@ -5,92 +5,139 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	redislib "github.com/redis/go-redis/v9"
 
 	"github.com/vladgrskkh/onerep-auth/internal/application"
+	"github.com/vladgrskkh/onerep-auth/internal/config"
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
-	"github.com/vladgrskkh/onerep-auth/internal/handler/middleware"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/crypto"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/postgres"
 	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/redis"
 )
 
-func main() {
+type App struct {
+	logger *slog.Logger
+	cfg    *config.Config
+	server *http.Server
+	pool   *pgxpool.Pool
+	redis  *redislib.Client
+}
+
+func NewApp(opts ...Option) *App {
+	cfg := config.Load()
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	databaseURL := os.Getenv("DATABASE_URL")
-	redisURL := os.Getenv("REDIS_URL")
-	port := envOrDefault("AUTH_PORT", "8080")
-	jwtPrivateKeyPEM := os.Getenv("JWT_PRIVATE_KEY")
-	jwtTTL := 15 * time.Minute
-	refreshTTL := 7 * 24 * time.Hour
+	app := &App{logger: logger, cfg: cfg}
 
-	pool, err := pgxpool.New(context.Background(), databaseURL)
+	for _, opt := range opts {
+		opt(app)
+	}
+
+	return app
+}
+
+func (a *App) Run(ctx context.Context) error {
+	pool, err := pgxpool.New(ctx, a.cfg.DatabaseURL)
 	if err != nil {
-		logger.Error("failed to connect to postgres", "error", err)
-		os.Exit(1)
+		return err
 	}
 	defer pool.Close()
+	a.pool = pool
 
-	redisOpts, err := redislib.ParseURL(redisURL)
+	redisOpts, err := redislib.ParseURL(a.cfg.RedisURL)
 	if err != nil {
-		logger.Error("failed to parse redis URL", "error", err)
-		os.Exit(1)
+		return err
 	}
 	redisClient := redislib.NewClient(redisOpts)
+	a.redis = redisClient
 
 	userRepo := postgres.NewUserRepo(pool)
-
 	hasher := crypto.NewPasswordHasher()
-	jwtSvc, err := jwt.NewService(jwtPrivateKeyPEM, jwtTTL)
-	if err != nil {
-		logger.Error("failed to create JWT service", "error", err)
-		os.Exit(1)
-	}
-	tokenStore := redis.NewTokenStore(redisClient, refreshTTL)
 
-	authSvc := application.NewAuthService(userRepo, userRepo, userRepo, *hasher, *jwtSvc, tokenStore)
+	tm, err := jwt.NewTokenManager(a.cfg.JWTPrivateKeyPEM, a.cfg.JWTTokenTTL)
+	if err != nil {
+		return err
+	}
+	tokenStore := redis.NewTokenStore(redisClient, a.cfg.RefreshTokenTTL)
+
+	authSvc := application.NewAuthService(userRepo, *hasher, *tm, tokenStore)
 	userSvc := application.NewUserService(userRepo, userRepo)
 
 	r := chi.NewRouter()
-	r.Use(middleware.Logging(logger))
-	r.Use(chimw.Recoverer)
-	r.Use(chimw.RequestID)
-	r.Use(chimw.RealIP)
-
-	r.Get("/health", healthHandler)
-	r.Get("/.well-known/jwks.json", handler.JWKSHandler(jwtSvc.PublicKey))
 
 	authHandler := handler.NewAuthHandler(authSvc)
-	authHandler.RegisterRoutes(r)
+	userHandler := handler.NewUserHandler(userSvc)
+	jwksHandler := handler.JWKSHandler(tm.PublicKey)
 
-	r.Group(func(r chi.Router) {
-		r.Use(middleware.Authenticate(jwtSvc))
-		userHandler := handler.NewUserHandler(userSvc)
-		userHandler.RegisterRoutes(r)
-	})
+	handler.RegisterRoutes(r, authHandler, userHandler, jwksHandler, tm, a.logger)
 
-	logger.Info("starting auth service", "port", port)
-	if err := http.ListenAndServe(":"+port, r); err != nil {
-		logger.Error("server error", "error", err)
+	a.server = &http.Server{
+		Addr:              ":" + a.cfg.Port,
+		Handler:           r,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	go func() {
+		a.logger.Info("starting auth service", "port", a.cfg.Port)
+		if listenErr := a.server.ListenAndServe(); listenErr != nil && listenErr != http.ErrServerClosed {
+			a.logger.Error("server error", "error", listenErr)
+			os.Exit(1)
+		}	
+	}()
+
+	return nil
+}
+
+func (a *App) Shutdown(ctx context.Context) error {
+	if a.server != nil {
+		return a.server.Shutdown(ctx)
+	}
+	return nil
+}
+
+type Option func(*App)
+
+func WithLogger(logger *slog.Logger) Option {
+	return func(a *App) {
+		a.logger = logger
+	}
+}
+
+func main() {
+	if err := run(); err != nil {
 		os.Exit(1)
 	}
 }
 
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok"}`))
-}
+func run() error {
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
 
-func envOrDefault(key, defaultVal string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
+	app := NewApp()
+
+	if err := app.Run(ctx); err != nil {
+		app.logger.Error("failed to start", "error", err)
+		return err
 	}
-	return defaultVal
+
+	<-ctx.Done()
+	app.logger.Info("shutting down...")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+
+	if err := app.Shutdown(shutdownCtx); err != nil {
+		app.logger.Error("force shutdown", "error", err)
+		return err
+	}
+
+	app.logger.Info("stopped")
+	return nil
 }

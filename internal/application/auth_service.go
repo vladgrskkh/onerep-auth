@@ -10,15 +10,11 @@ import (
 	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
 )
 
-type userCreator interface {
+// userRepository is a single interface for all user lookup/creation — satisfies ISP by only including
+// methods AuthService actually uses.
+type userRepository interface {
 	Create(ctx context.Context, user domain.User) (domain.User, error)
-}
-
-type userFinder interface {
 	FindByEmail(ctx context.Context, email string) (domain.User, error)
-}
-
-type userByIDFinder interface {
 	FindByID(ctx context.Context, id uuid.UUID) (domain.User, error)
 }
 
@@ -31,34 +27,28 @@ type tokenStorer interface {
 type TokenPair = jwtsvc.TokenPair
 
 type AuthService struct {
-	userCreator    userCreator
-	userFinder     userFinder
-	userByIDFinder userByIDFinder
-	hasher         crypto.PasswordHasher
-	jwtSvc         jwtsvc.Service
-	tokenStore     tokenStorer
+	users      userRepository
+	hasher     crypto.PasswordHasher
+	tokens     jwtsvc.TokenManager
+	tokenStore tokenStorer
 }
 
 func NewAuthService(
-	userCreator userCreator,
-	userFinder userFinder,
-	userByIDFinder userByIDFinder,
+	users userRepository,
 	hasher crypto.PasswordHasher,
-	jwtSvc jwtsvc.Service,
+	tokens jwtsvc.TokenManager,
 	tokenStore tokenStorer,
 ) *AuthService {
 	return &AuthService{
-		userCreator:    userCreator,
-		userFinder:     userFinder,
-		userByIDFinder: userByIDFinder,
-		hasher:         hasher,
-		jwtSvc:         jwtSvc,
-		tokenStore:     tokenStore,
+		users:      users,
+		hasher:     hasher,
+		tokens:     tokens,
+		tokenStore: tokenStore,
 	}
 }
 
 func (s *AuthService) Register(ctx context.Context, email, password, displayName string) (TokenPair, error) {
-	_, err := s.userFinder.FindByEmail(ctx, email)
+	_, err := s.users.FindByEmail(ctx, email)
 	if err == nil {
 		return TokenPair{}, domain.ErrEmailAlreadyExists
 	}
@@ -74,12 +64,12 @@ func (s *AuthService) Register(ctx context.Context, email, password, displayName
 	}
 	user.PasswordHash = &hash
 
-	user, err = s.userCreator.Create(ctx, user)
+	user, err = s.users.Create(ctx, user)
 	if err != nil {
 		return TokenPair{}, err
 	}
 
-	pair, err := s.jwtSvc.IssueTokenPair(user)
+	pair, err := s.tokens.IssueTokenPair(user)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -92,7 +82,7 @@ func (s *AuthService) Register(ctx context.Context, email, password, displayName
 }
 
 func (s *AuthService) Login(ctx context.Context, email, password string) (TokenPair, error) {
-	user, err := s.userFinder.FindByEmail(ctx, email)
+	user, err := s.users.FindByEmail(ctx, email)
 	if err != nil {
 		return TokenPair{}, domain.ErrInvalidCredentials
 	}
@@ -105,7 +95,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (TokenP
 		return TokenPair{}, domain.ErrInvalidCredentials
 	}
 
-	pair, err := s.jwtSvc.IssueTokenPair(user)
+	pair, err := s.tokens.IssueTokenPair(user)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -136,12 +126,12 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (TokenPa
 		return TokenPair{}, err
 	}
 
-	user, err := s.userByIDFinder.FindByID(ctx, userID)
+	user, err := s.users.FindByID(ctx, userID)
 	if err != nil {
 		return TokenPair{}, err
 	}
 
-	pair, err := s.jwtSvc.IssueTokenPair(user)
+	pair, err := s.tokens.IssueTokenPair(user)
 	if err != nil {
 		return TokenPair{}, err
 	}

@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/vladgrskkh/onerep-auth/internal/domain"
-
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/google/uuid"
+
+	"github.com/vladgrskkh/onerep-auth/internal/domain"
 )
 
 type OAuthAccountRepo struct {
@@ -27,7 +27,11 @@ func (r *OAuthAccountRepo) Create(ctx context.Context, account domain.OAuthAccou
 	return account, err
 }
 
-func (r *OAuthAccountRepo) FindByProviderID(ctx context.Context, provider domain.OAuthProvider, providerUserID string) (domain.OAuthAccount, error) {
+func (r *OAuthAccountRepo) FindByProviderID(
+	ctx context.Context,
+	provider domain.OAuthProvider,
+	providerUserID string,
+) (domain.OAuthAccount, error) {
 	var a domain.OAuthAccount
 	err := r.pool.QueryRow(ctx, `
 		SELECT id, user_id, provider, provider_user_id, created_at

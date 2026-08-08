@@ -26,7 +26,7 @@ func NewGoogleAdapter(clientID, clientSecret, redirectURL string) *GoogleAdapter
 	}
 }
 
-func (a *GoogleAdapter) AuthURL(ctx context.Context) string {
+func (a *GoogleAdapter) AuthURL(_ context.Context) string {
 	return a.config.AuthCodeURL("state", oauth2.AccessTypeOnline)
 }
 

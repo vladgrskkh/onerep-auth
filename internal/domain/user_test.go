@@ -3,10 +3,10 @@ package domain_test
 import (
 	"testing"
 
-	"github.com/vladgrskkh/onerep-auth/internal/domain"
-
-	"github.com/stretchr/testify/assert"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/vladgrskkh/onerep-auth/internal/domain"
 )
 
 func TestNewUser(t *testing.T) {

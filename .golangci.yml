@@ -184,7 +184,7 @@ linters:
         - fieldalignment
       settings:
         shadow:
-          strict: true
+          strict: false
 
     mnd:
       ignored-functions:

@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/vladgrskkh/onerep-auth/internal/domain"
-
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/google/uuid"
+
+	"github.com/vladgrskkh/onerep-auth/internal/domain"
 )
 
 type UserRepo struct {

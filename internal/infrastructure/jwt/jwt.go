@@ -10,49 +10,39 @@ import (
 	"time"
 
 	jwtlib "github.com/golang-jwt/jwt/v5"
-	"github.com/vladgrskkh/onerep-auth/internal/domain"
 	"github.com/google/uuid"
+
+	"github.com/vladgrskkh/onerep-auth/internal/domain"
 )
 
-type Claims struct {
-	jwtlib.RegisteredClaims
-	Email string `json:"email"`
-}
-
-type Service struct {
-	privateKey *rsa.PrivateKey
-	PublicKey  *rsa.PublicKey
-	ttl        time.Duration
-}
-
-func NewService(privateKeyPEM string, ttl time.Duration) (*Service, error) {
+func NewTokenManager(privateKeyPEM string, ttl time.Duration) (*TokenManager, error) {
 	key, err := jwtlib.ParseRSAPrivateKeyFromPEM([]byte(privateKeyPEM))
 	if err != nil {
 		return nil, fmt.Errorf("parse private key: %w", err)
 	}
-	return &Service{privateKey: key, PublicKey: &key.PublicKey, ttl: ttl}, nil
+	return &TokenManager{privateKey: key, PublicKey: &key.PublicKey, ttl: ttl}, nil
 }
 
-func (s *Service) GetUserIDFromToken(tokenString string) (uuid.UUID, error) {
-	return GetUserIDFromToken(tokenString, s.PublicKeyPEM())
+func (m *TokenManager) GetUserIDFromToken(tokenString string) (uuid.UUID, error) {
+	return GetUserIDFromToken(tokenString, m.PublicKeyPEM())
 }
 
-func (s *Service) GenerateAccessToken(user domain.User) (string, error) {
+func (m *TokenManager) GenerateAccessToken(user domain.User) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		RegisteredClaims: jwtlib.RegisteredClaims{
 			Subject:   user.ID.String(),
 			IssuedAt:  jwtlib.NewNumericDate(now),
-			ExpiresAt: jwtlib.NewNumericDate(now.Add(s.ttl)),
+			ExpiresAt: jwtlib.NewNumericDate(now.Add(m.ttl)),
 		},
 		Email: user.Email,
 	}
 	token := jwtlib.NewWithClaims(jwtlib.SigningMethodRS256, claims)
-	return token.SignedString(s.privateKey)
+	return token.SignedString(m.privateKey)
 }
 
-func (s *Service) PublicKeyPEM() string {
-	pubKeyBytes, err := x509.MarshalPKIXPublicKey(&s.privateKey.PublicKey)
+func (m *TokenManager) PublicKeyPEM() string {
+	pubKeyBytes, err := x509.MarshalPKIXPublicKey(m.PublicKey)
 	if err != nil {
 		return ""
 	}
@@ -62,22 +52,8 @@ func (s *Service) PublicKeyPEM() string {
 	}))
 }
 
-func GenerateRefreshToken() (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(b), nil
-}
-
-type TokenPair struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    int    `json:"expires_in"`
-}
-
-func (s *Service) IssueTokenPair(user domain.User) (TokenPair, error) {
-	accessToken, err := s.GenerateAccessToken(user)
+func (m *TokenManager) IssueTokenPair(user domain.User) (TokenPair, error) {
+	accessToken, err := m.GenerateAccessToken(user)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -90,8 +66,16 @@ func (s *Service) IssueTokenPair(user domain.User) (TokenPair, error) {
 	return TokenPair{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		ExpiresIn:    int(s.ttl.Seconds()),
+		ExpiresIn:    int(m.ttl.Seconds()),
 	}, nil
+}
+
+func GenerateRefreshToken() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
 func GenerateKeyPair() (*rsa.PrivateKey, error) {
