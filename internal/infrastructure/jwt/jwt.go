@@ -21,6 +21,7 @@ type Claims struct {
 
 type Service struct {
 	privateKey *rsa.PrivateKey
+	PublicKey  *rsa.PublicKey
 	ttl        time.Duration
 }
 
@@ -29,7 +30,11 @@ func NewService(privateKeyPEM string, ttl time.Duration) (*Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse private key: %w", err)
 	}
-	return &Service{privateKey: key, ttl: ttl}, nil
+	return &Service{privateKey: key, PublicKey: &key.PublicKey, ttl: ttl}, nil
+}
+
+func (s *Service) GetUserIDFromToken(tokenString string) (uuid.UUID, error) {
+	return GetUserIDFromToken(tokenString, s.PublicKeyPEM())
 }
 
 func (s *Service) GenerateAccessToken(user domain.User) (string, error) {
