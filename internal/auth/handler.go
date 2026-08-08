@@ -1,4 +1,4 @@
-package handler
+package auth
 
 import (
 	"context"
@@ -7,14 +7,14 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/vladgrskkh/onerep-auth/internal/application"
+	"github.com/vladgrskkh/onerep-auth/internal/handler"
 )
 
 type authService interface {
-	Register(ctx context.Context, email, password, displayName string) (application.TokenPair, error)
-	Login(ctx context.Context, email, password string) (application.TokenPair, error)
+	Register(ctx context.Context, email, password, displayName string) (TokenPair, error)
+	Login(ctx context.Context, email, password string) (TokenPair, error)
 	Logout(ctx context.Context, refreshToken string) error
-	Refresh(ctx context.Context, refreshToken string) (application.TokenPair, error)
+	Refresh(ctx context.Context, refreshToken string) (TokenPair, error)
 }
 
 type AuthHandler struct {
@@ -39,17 +39,17 @@ func (h *AuthHandler) register(w http.ResponseWriter, r *http.Request) {
 		DisplayName string `json:"display_name"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		handler.WriteError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	pair, err := h.svc.Register(r.Context(), req.Email, req.Password, req.DisplayName)
 	if err != nil {
-		writeDomainError(w, err)
+		handler.WriteDomainError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, pair)
+	handler.WriteJSON(w, http.StatusCreated, pair)
 }
 
 func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
@@ -58,17 +58,17 @@ func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		handler.WriteError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	pair, err := h.svc.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		writeDomainError(w, err)
+		handler.WriteDomainError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, pair)
+	handler.WriteJSON(w, http.StatusOK, pair)
 }
 
 func (h *AuthHandler) logout(w http.ResponseWriter, r *http.Request) {
@@ -76,12 +76,12 @@ func (h *AuthHandler) logout(w http.ResponseWriter, r *http.Request) {
 		RefreshToken string `json:"refresh_token"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		handler.WriteError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	if err := h.svc.Logout(r.Context(), req.RefreshToken); err != nil {
-		writeDomainError(w, err)
+		handler.WriteDomainError(w, err)
 		return
 	}
 
@@ -93,15 +93,15 @@ func (h *AuthHandler) refresh(w http.ResponseWriter, r *http.Request) {
 		RefreshToken string `json:"refresh_token"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		handler.WriteError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	pair, err := h.svc.Refresh(r.Context(), req.RefreshToken)
 	if err != nil {
-		writeDomainError(w, err)
+		handler.WriteDomainError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, pair)
+	handler.WriteJSON(w, http.StatusOK, pair)
 }

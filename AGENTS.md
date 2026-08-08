@@ -9,21 +9,24 @@ Authentication and user profile service for OneRep gym training app.
 ```bash
 make run          # Start server on :8080
 make test         # Run all tests
-make lint         # go vet ./...
+make lint         # golangci-lint run
 make migrate-up   # Apply migrations
 make migrate-down # Rollback migrations
 ```
 
 ## Architecture
-DDD with CSP (Consumer-defined interfaces):
+Domain-based structure with CSP (Consumer-defined interfaces):
 
 ```
 cmd/server/          # Entry point
 internal/
-  domain/            # Entities, value objects — no interfaces, no imports
-  application/       # Use cases + consumer-defined interfaces (ISP)
-  handler/           # HTTP handlers, middleware
-  infrastructure/    # Postgres, Redis, JWT, OAuth implementations
+  auth/              # Auth domain: User, AuthService, OAuthService, handlers, consumer interfaces
+  user/              # User domain: UserService, UpdateProfileInput, handlers
+  domain/            # Shared error sentinels (no imports)
+  application/       # App wire-up, route registration
+  config/            # Config with caarlos0/env
+  handler/           # Shared HTTP utilities: response helpers, context, error mapping, DTOs, middleware
+  infrastructure/    # Postgres, Redis, JWT, Crypto, OAuth implementations
 ```
 
 ## CI
@@ -40,5 +43,10 @@ make run
 ```
 
 ## ISP rule
-Interfaces are declared where they are consumed (application/), not in infrastructure/.
+Interfaces are declared where they are consumed (auth/, user/), not in infrastructure/.
 No central interfaces.go file. Each service declares only the methods it needs.
+
+## Mock generation
+```bash
+mockery
+```

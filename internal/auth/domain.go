@@ -1,4 +1,4 @@
-package domain
+package auth
 
 import (
 	"errors"
@@ -7,6 +7,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+
+	"github.com/vladgrskkh/onerep-auth/internal/domain"
 )
 
 type Gender string
@@ -64,15 +66,15 @@ func NewUser(email, password, displayName string) (User, error) {
 			for _, e := range validationErr {
 				switch e.Field() {
 				case "Email":
-					return User{}, ErrInvalidEmail
+					return User{}, domain.ErrInvalidEmail
 				case "Password":
-					return User{}, ErrInvalidPassword
+					return User{}, domain.ErrInvalidPassword
 				case "DisplayName":
-					return User{}, ErrInvalidCredentials
+					return User{}, domain.ErrInvalidCredentials
 				}
 			}
 		}
-		return User{}, ErrInvalidEmail
+		return User{}, domain.ErrInvalidEmail
 	}
 	now := time.Now()
 	return User{

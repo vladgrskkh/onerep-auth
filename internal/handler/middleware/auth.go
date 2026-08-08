@@ -8,6 +8,10 @@ import (
 	"github.com/google/uuid"
 )
 
+type CtxKey string
+
+const UserIDKey CtxKey = "user_id"
+
 type JWTValidator interface {
 	GetUserIDFromToken(tokenString string) (uuid.UUID, error)
 }
@@ -28,7 +32,7 @@ func Authenticate(validator JWTValidator) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), "user_id", userID)
+			ctx := context.WithValue(r.Context(), UserIDKey, userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

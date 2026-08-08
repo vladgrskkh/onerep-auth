@@ -11,8 +11,6 @@ import (
 
 	jwtlib "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-
-	"github.com/vladgrskkh/onerep-auth/internal/domain"
 )
 
 func NewTokenManager(privateKeyPEM string, ttl time.Duration) (*TokenManager, error) {
@@ -27,15 +25,15 @@ func (m *TokenManager) GetUserIDFromToken(tokenString string) (uuid.UUID, error)
 	return GetUserIDFromToken(tokenString, m.PublicKeyPEM())
 }
 
-func (m *TokenManager) GenerateAccessToken(user domain.User) (string, error) {
+func (m *TokenManager) GenerateAccessToken(userID uuid.UUID, email string) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		RegisteredClaims: jwtlib.RegisteredClaims{
-			Subject:   user.ID.String(),
+			Subject:   userID.String(),
 			IssuedAt:  jwtlib.NewNumericDate(now),
 			ExpiresAt: jwtlib.NewNumericDate(now.Add(m.ttl)),
 		},
-		Email: user.Email,
+		Email: email,
 	}
 	token := jwtlib.NewWithClaims(jwtlib.SigningMethodRS256, claims)
 	return token.SignedString(m.privateKey)
@@ -52,8 +50,8 @@ func (m *TokenManager) PublicKeyPEM() string {
 	}))
 }
 
-func (m *TokenManager) IssueTokenPair(user domain.User) (TokenPair, error) {
-	accessToken, err := m.GenerateAccessToken(user)
+func (m *TokenManager) IssueTokenPair(userID uuid.UUID, email string) (TokenPair, error) {
+	accessToken, err := m.GenerateAccessToken(userID, email)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -71,7 +69,7 @@ func (m *TokenManager) IssueTokenPair(user domain.User) (TokenPair, error) {
 }
 
 func GenerateRefreshToken() (string, error) {
-	b := make([]byte, 32)
+	b := make([]byte, 32) //nolint:mnd // refresh token byte length
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
@@ -79,7 +77,7 @@ func GenerateRefreshToken() (string, error) {
 }
 
 func GenerateKeyPair() (*rsa.PrivateKey, error) {
-	return rsa.GenerateKey(rand.Reader, 2048)
+	return rsa.GenerateKey(rand.Reader, 2048) //nolint:mnd // RSA key size
 }
 
 func GetUserIDFromToken(tokenString, publicKeyPEM string) (uuid.UUID, error) {
@@ -88,7 +86,7 @@ func GetUserIDFromToken(tokenString, publicKeyPEM string) (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 
-	token, err := jwtlib.ParseWithClaims(tokenString, &Claims{}, func(t *jwtlib.Token) (interface{}, error) {
+	token, err := jwtlib.ParseWithClaims(tokenString, &Claims{}, func(_ *jwtlib.Token) (any, error) {
 		return key, nil
 	})
 	if err != nil {

@@ -1,4 +1,4 @@
-package handler
+package application
 
 import (
 	"log/slog"
@@ -7,13 +7,15 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 
+	"github.com/vladgrskkh/onerep-auth/internal/auth"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/middleware"
+	"github.com/vladgrskkh/onerep-auth/internal/user"
 )
 
 func RegisterRoutes(
 	r chi.Router,
-	authHandler *AuthHandler,
-	userHandler *UserHandler,
+	authHandler *auth.AuthHandler,
+	userHandler *user.UserHandler,
 	jwksHandler http.HandlerFunc,
 	tokenValidator middleware.JWTValidator,
 	logger *slog.Logger,

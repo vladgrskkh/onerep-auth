@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vladgrskkh/onerep-auth/internal/domain"
 	infrajwt "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
 
 	"github.com/google/uuid"
@@ -25,11 +24,10 @@ func TestTokenManager_IssueAndValidate(t *testing.T) {
 	tm, err := infrajwt.NewTokenManager(string(privPEM), 15*time.Minute)
 	require.NoError(t, err)
 
-	user := domain.User{}
-	user.ID = uuid.Must(uuid.NewV7())
-	user.Email = "test@example.com"
+	userID := uuid.Must(uuid.NewV7())
+	email := "test@example.com"
 
-	pair, err := tm.IssueTokenPair(user)
+	pair, err := tm.IssueTokenPair(userID, email)
 	require.NoError(t, err)
 	assert.NotEmpty(t, pair.AccessToken)
 	assert.NotEmpty(t, pair.RefreshToken)
@@ -37,5 +35,5 @@ func TestTokenManager_IssueAndValidate(t *testing.T) {
 
 	id, err := infrajwt.GetUserIDFromToken(pair.AccessToken, tm.PublicKeyPEM())
 	require.NoError(t, err)
-	assert.Equal(t, user.ID, id)
+	assert.Equal(t, userID, id)
 }

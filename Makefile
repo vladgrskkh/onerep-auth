@@ -10,7 +10,7 @@ test:
 	go test ./... -v -count=1
 
 lint:
-	go vet ./...
+	golangci-lint run --timeout=5m
 
 migrate-up:
 	goose -dir migrations postgres "$(DATABASE_URL)" up

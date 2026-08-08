@@ -1,4 +1,4 @@
-package application
+package auth
 
 import (
 	"context"
@@ -10,15 +10,13 @@ import (
 	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
 )
 
-// userRepository is a single interface for all user lookup/creation — satisfies ISP by only including
-// methods AuthService actually uses.
-type userRepository interface {
-	Create(ctx context.Context, user domain.User) (domain.User, error)
-	FindByEmail(ctx context.Context, email string) (domain.User, error)
-	FindByID(ctx context.Context, id uuid.UUID) (domain.User, error)
+type UserRepository interface {
+	Create(ctx context.Context, user User) (User, error)
+	FindByEmail(ctx context.Context, email string) (User, error)
+	FindByID(ctx context.Context, id uuid.UUID) (User, error)
 }
 
-type tokenStorer interface {
+type TokenStorer interface {
 	Save(ctx context.Context, token string, userID string) error
 	Get(ctx context.Context, token string) (string, error)
 	Delete(ctx context.Context, token string) error
@@ -27,17 +25,17 @@ type tokenStorer interface {
 type TokenPair = jwtsvc.TokenPair
 
 type AuthService struct {
-	users      userRepository
+	users      UserRepository
 	hasher     crypto.PasswordHasher
 	tokens     jwtsvc.TokenManager
-	tokenStore tokenStorer
+	tokenStore TokenStorer
 }
 
 func NewAuthService(
-	users userRepository,
+	users UserRepository,
 	hasher crypto.PasswordHasher,
 	tokens jwtsvc.TokenManager,
-	tokenStore tokenStorer,
+	tokenStore TokenStorer,
 ) *AuthService {
 	return &AuthService{
 		users:      users,
@@ -53,7 +51,7 @@ func (s *AuthService) Register(ctx context.Context, email, password, displayName
 		return TokenPair{}, domain.ErrEmailAlreadyExists
 	}
 
-	user, err := domain.NewUser(email, password, displayName)
+	user, err := NewUser(email, password, displayName)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -69,7 +67,7 @@ func (s *AuthService) Register(ctx context.Context, email, password, displayName
 		return TokenPair{}, err
 	}
 
-	pair, err := s.tokens.IssueTokenPair(user)
+	pair, err := s.tokens.IssueTokenPair(user.ID, user.Email)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -91,11 +89,11 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (TokenP
 		return TokenPair{}, domain.ErrInvalidCredentials
 	}
 
-	if err := s.hasher.Compare(*user.PasswordHash, password); err != nil {
+	if cmpErr := s.hasher.Compare(*user.PasswordHash, password); cmpErr != nil {
 		return TokenPair{}, domain.ErrInvalidCredentials
 	}
 
-	pair, err := s.tokens.IssueTokenPair(user)
+	pair, err := s.tokens.IssueTokenPair(user.ID, user.Email)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -117,8 +115,8 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (TokenPa
 		return TokenPair{}, domain.ErrTokenNotFound
 	}
 
-	if err := s.tokenStore.Delete(ctx, refreshToken); err != nil {
-		return TokenPair{}, err
+	if delErr := s.tokenStore.Delete(ctx, refreshToken); delErr != nil {
+		return TokenPair{}, delErr
 	}
 
 	userID, err := uuid.Parse(userIDStr)
@@ -131,7 +129,7 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (TokenPa
 		return TokenPair{}, err
 	}
 
-	pair, err := s.tokens.IssueTokenPair(user)
+	pair, err := s.tokens.IssueTokenPair(user.ID, user.Email)
 	if err != nil {
 		return TokenPair{}, err
 	}
