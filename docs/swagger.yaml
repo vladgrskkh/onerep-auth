@@ -1,0 +1,284 @@
+basePath: /v1
+definitions:
+  github_com_vladgrskkh_onerep-auth_internal_handler.ErrorDetail:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+      user_message:
+        type: string
+    type: object
+  github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorDetail'
+    type: object
+  github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.LogoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.RegisterRequest:
+    properties:
+      display_name:
+        minLength: 1
+        type: string
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - display_name
+    - email
+    - password
+    type: object
+  github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UpdateProfileRequest:
+    properties:
+      birth_date:
+        type: string
+      display_name:
+        type: string
+      gender:
+        type: string
+    type: object
+  github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfileResponse:
+    properties:
+      avatar_url:
+        type: string
+      birth_date:
+        type: string
+      created_at:
+        type: string
+      display_name:
+        type: string
+      email:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+    type: object
+  github_com_vladgrskkh_onerep-auth_internal_infrastructure_auth_jwt.TokenPair:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Authentication service for OneRep gym training app
+  title: OneRep Auth API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate with email and password
+      parameters:
+      - description: Login data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_infrastructure_auth_jwt.TokenPair'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+      summary: Login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Invalidate refresh token
+      parameters:
+      - description: Logout data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+      summary: Logout
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get a new token pair using a refresh token
+      parameters:
+      - description: Refresh data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_infrastructure_auth_jwt.TokenPair'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+      summary: Refresh tokens
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new account with email and password
+      parameters:
+      - description: Registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_infrastructure_auth_jwt.TokenPair'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - auth
+  /users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a user's public profile (email visible only to owner)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      description: Update the authenticated user's profile
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Profile data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user profile
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

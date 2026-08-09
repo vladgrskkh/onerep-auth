@@ -1,0 +1,11 @@
+with-expecter: true
+dir: internal/service/auth/mocks
+mockname: "Mock{{.InterfaceName}}"
+outpkg: "mocks"
+filename: "{{.InterfaceName | snakecase}}.gen.go"
+packages:
+  github.com/vladgrskkh/onerep-auth/internal/service/auth:
+    interfaces:
+      UserRepository:
+      TokenStorer:
+      OAuthAccountRepository:
