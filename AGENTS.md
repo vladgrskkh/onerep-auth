@@ -51,12 +51,13 @@ All errors return a structured body:
   "error": {
     "code": "INVALID_CREDENTIALS",
     "message": "invalid credentials",
-    "user_message": "The email or password you entered is incorrect",
-    "type": "user_error" | "system_error"
+    "user_message": "The email or password you entered is incorrect"
   }
 }
 ```
-Each domain has its own error mapper in `handler/<domain>/error_mapper.go`.
+`message` is always the system error (`err.Error()`); `user_message` is the
+user-facing copy and is omitted for system errors. Each domain has its own
+error mapper in `handler/<domain>/error_mapper.go`.
 
 ## CI
 - Go 1.26, golangci-lint v2 (golden config, maratori)

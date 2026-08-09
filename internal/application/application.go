@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -127,18 +128,31 @@ func (app *Application) Run(ctx context.Context) error {
 	app.server = &http.Server{
 		Addr:              ":" + app.cfg.Port,
 		Handler:           app.RegisterRoutes(tm),
-		ReadHeaderTimeout: time.Second * 5, //nolint:mnd // server read header timeout
+		ReadHeaderTimeout: app.cfg.ReadHeaderTimeout,
 	}
 
+	errCh := make(chan error, 1)
 	go func() {
 		app.logger.Info("starting auth service", "port", app.cfg.Port)
-		if listenErr := app.server.ListenAndServe(); listenErr != nil && listenErr != http.ErrServerClosed {
-			app.logger.Error("server error", "error", listenErr)
-			os.Exit(1)
-		}
+		errCh <- app.server.ListenAndServe()
 	}()
 
-	return nil
+	select {
+	case <-ctx.Done():
+		app.logger.Info("shutting down...")
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), app.shutdownTimer)
+		defer shutdownCancel()
+
+		if err := app.server.Shutdown(shutdownCtx); err != nil {
+			return err
+		}
+		return nil
+	case err := <-errCh:
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return err
+		}
+		return nil
+	}
 }
 
 func (app *Application) Shutdown(ctx context.Context) error {

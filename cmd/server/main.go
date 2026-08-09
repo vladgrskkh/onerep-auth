@@ -36,20 +36,8 @@ func run() error {
 		return err
 	}
 
-	go func() {
-		if err := app.Run(ctx); err != nil {
-			logger.Error("failed to run", "error", err)
-		}
-	}()
-
-	<-ctx.Done()
-	logger.Info("shutting down...")
-
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), app.ShutdownTimeout())
-	defer shutdownCancel()
-
-	if err := app.Shutdown(shutdownCtx); err != nil {
-		logger.Error("force shutdown", "error", err)
+	if err := app.Run(ctx); err != nil {
+		logger.Error("server error", "error", err)
 		return err
 	}
 

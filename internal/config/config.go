@@ -14,6 +14,7 @@ type Config struct {
 	JWTPublicKeyPEM   string        `env:"JWT_PUBLIC_KEY"`
 	JWTTokenTTL       time.Duration `env:"JWT_TOKEN_TTL"         envDefault:"15m"`
 	RefreshTokenTTL   time.Duration `env:"REFRESH_TOKEN_TTL"     envDefault:"168h"`
+	ReadHeaderTimeout time.Duration `env:"READ_HEADER_TIMEOUT"   envDefault:"5s"`
 	ShutdownTimeout   time.Duration `env:"SHUTDOWN_TIMEOUT"      envDefault:"10s"`
 	GoogleClientID    string        `env:"GOOGLE_CLIENT_ID"`
 	GoogleRedirectURL string        `env:"GOOGLE_REDIRECT_URL"   envDefault:"http://localhost:8080/v1/auth/oauth/google/callback"`
