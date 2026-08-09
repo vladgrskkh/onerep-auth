@@ -222,7 +222,6 @@ linters:
 
     sloglint:
       no-global: all
-      context: scope
 
     staticcheck:
       checks:

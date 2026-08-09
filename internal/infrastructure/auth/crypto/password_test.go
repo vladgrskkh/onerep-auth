@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/crypto"
+	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/crypto"
 )
 
 type PasswordTestSuite struct {

@@ -2,13 +2,18 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
+	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/jwt"
 
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
-	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
+	"github.com/vladgrskkh/onerep-auth/internal/handler/auth/dto"
+)
+
+const (
+	errCodeInvalidRequestBody = "INVALID_REQUEST_BODY"
+	errMsgInvalidRequestBody  = "invalid request body"
+	errUserInvalidRequestBody = "The request body is invalid"
 )
 
 type authService interface {
@@ -26,13 +31,17 @@ func NewAuthHandler(svc authService) *AuthHandler {
 	return &AuthHandler{svc: svc}
 }
 
-func (h *AuthHandler) RegisterRoutes(r chi.Router) {
-	r.Post("/v1/auth/register", h.register)
-	r.Post("/v1/auth/login", h.login)
-	r.Post("/v1/auth/logout", h.logout)
-	r.Post("/v1/auth/refresh", h.refresh)
+func (h *AuthHandler) writeInvalidBody(w http.ResponseWriter) {
+	handler.WriteError(w, http.StatusBadRequest, handler.ErrorDetail{
+		Code:        errCodeInvalidRequestBody,
+		Message:     errMsgInvalidRequestBody,
+		UserMessage: errUserInvalidRequestBody,
+		Type:        handler.ErrorTypeUser,
+	})
 }
 
+// Register handles user registration.
+//
 // @Summary Register a new user
 // @Description Create a new account with email and password
 // @Tags auth
@@ -40,29 +49,28 @@ func (h *AuthHandler) RegisterRoutes(r chi.Router) {
 // @Produce json
 // @Param request body dto.RegisterRequest true "Registration data"
 // @Success 201 {object} jwtsvc.TokenPair
-// @Failure 400 {object} map[string]string
-// @Failure 409 {object} map[string]string
+// @Failure 400 {object} handler.ErrorResponse
+// @Failure 409 {object} handler.ErrorResponse
 // @Router /auth/register [post]
-func (h *AuthHandler) register(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Email       string `json:"email"`
-		Password    string `json:"password"`
-		DisplayName string `json:"display_name"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		handler.WriteError(w, http.StatusBadRequest, "invalid request body")
+func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+	var req dto.RegisterRequest
+	if err := handler.DecodeJSON(r, &req); err != nil {
+		h.writeInvalidBody(w)
 		return
 	}
 
 	pair, err := h.svc.Register(r.Context(), req.Email, req.Password, req.DisplayName)
 	if err != nil {
-		handler.WriteDomainError(w, err)
+		status, detail := mapError(err)
+		handler.WriteError(w, status, detail)
 		return
 	}
 
 	handler.WriteJSON(w, http.StatusCreated, pair)
 }
 
+// Login handles user authentication.
+//
 // @Summary Login
 // @Description Authenticate with email and password
 // @Tags auth
@@ -70,28 +78,28 @@ func (h *AuthHandler) register(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param request body dto.LoginRequest true "Login data"
 // @Success 200 {object} jwtsvc.TokenPair
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
+// @Failure 400 {object} handler.ErrorResponse
+// @Failure 401 {object} handler.ErrorResponse
 // @Router /auth/login [post]
-func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		handler.WriteError(w, http.StatusBadRequest, "invalid request body")
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var req dto.LoginRequest
+	if err := handler.DecodeJSON(r, &req); err != nil {
+		h.writeInvalidBody(w)
 		return
 	}
 
 	pair, err := h.svc.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		handler.WriteDomainError(w, err)
+		status, detail := mapError(err)
+		handler.WriteError(w, status, detail)
 		return
 	}
 
 	handler.WriteJSON(w, http.StatusOK, pair)
 }
 
+// Logout invalidates the refresh token.
+//
 // @Summary Logout
 // @Description Invalidate refresh token
 // @Tags auth
@@ -99,25 +107,26 @@ func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param request body dto.LogoutRequest true "Logout data"
 // @Success 204
-// @Failure 400 {object} map[string]string
+// @Failure 400 {object} handler.ErrorResponse
 // @Router /auth/logout [post]
-func (h *AuthHandler) logout(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		RefreshToken string `json:"refresh_token"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		handler.WriteError(w, http.StatusBadRequest, "invalid request body")
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	var req dto.LogoutRequest
+	if err := handler.DecodeJSON(r, &req); err != nil {
+		h.writeInvalidBody(w)
 		return
 	}
 
 	if err := h.svc.Logout(r.Context(), req.RefreshToken); err != nil {
-		handler.WriteDomainError(w, err)
+		status, detail := mapError(err)
+		handler.WriteError(w, status, detail)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// Refresh rotates the refresh token.
+//
 // @Summary Refresh tokens
 // @Description Get a new token pair using a refresh token
 // @Tags auth
@@ -125,21 +134,20 @@ func (h *AuthHandler) logout(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param request body dto.RefreshRequest true "Refresh data"
 // @Success 200 {object} jwtsvc.TokenPair
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
+// @Failure 400 {object} handler.ErrorResponse
+// @Failure 401 {object} handler.ErrorResponse
 // @Router /auth/refresh [post]
-func (h *AuthHandler) refresh(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		RefreshToken string `json:"refresh_token"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		handler.WriteError(w, http.StatusBadRequest, "invalid request body")
+func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
+	var req dto.RefreshRequest
+	if err := handler.DecodeJSON(r, &req); err != nil {
+		h.writeInvalidBody(w)
 		return
 	}
 
 	pair, err := h.svc.Refresh(r.Context(), req.RefreshToken)
 	if err != nil {
-		handler.WriteDomainError(w, err)
+		status, detail := mapError(err)
+		handler.WriteError(w, status, detail)
 		return
 	}
 

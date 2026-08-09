@@ -11,24 +11,21 @@ func JWKSHandler(publicKey *rsa.PublicKey) http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		key, err := jwk.FromRaw(publicKey)
 		if err != nil {
-			WriteError(w, http.StatusInternalServerError, "failed to create JWK")
+			WriteSystemError(w, http.StatusInternalServerError, "JWK_CREATE_FAILED")
 			return
 		}
-		err = key.Set(jwk.KeyIDKey, "gym-auth-signing-key")
-		if err != nil {
-			WriteError(w, http.StatusInternalServerError, "failed to set key ID")
+		if err := key.Set(jwk.KeyIDKey, "onerep-auth-signing-key"); err != nil {
+			WriteSystemError(w, http.StatusInternalServerError, "JWK_KEY_ID_FAILED")
 			return
 		}
-		err = key.Set(jwk.AlgorithmKey, "RS256")
-		if err != nil {
-			WriteError(w, http.StatusInternalServerError, "failed to set algorithm")
+		if err := key.Set(jwk.AlgorithmKey, "RS256"); err != nil {
+			WriteSystemError(w, http.StatusInternalServerError, "JWK_ALGORITHM_FAILED")
 			return
 		}
 
 		ks := jwk.NewSet()
-		err = ks.AddKey(key)
-		if err != nil {
-			WriteError(w, http.StatusInternalServerError, "failed to add key to set")
+		if err := ks.AddKey(key); err != nil {
+			WriteSystemError(w, http.StatusInternalServerError, "JWK_SET_FAILED")
 			return
 		}
 

@@ -1,7 +1,7 @@
 with-expecter: true
-dir: internal/service/auth
+dir: internal/service/auth/mocks
 mockname: "Mock{{.InterfaceName}}"
-outpkg: "auth"
+outpkg: "mocks"
 filename: "{{.InterfaceName | snakecase}}.gen.go"
 packages:
   github.com/vladgrskkh/onerep-auth/internal/service/auth:

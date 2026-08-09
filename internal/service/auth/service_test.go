@@ -12,17 +12,18 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
-	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/crypto"
-	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
+	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/crypto"
+	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/jwt"
 	"github.com/vladgrskkh/onerep-auth/internal/service/auth"
+	authmocks "github.com/vladgrskkh/onerep-auth/internal/service/auth/mocks"
 )
 
 type ServiceTestSuite struct {
 	suite.Suite
 
 	svc        *auth.AuthService
-	userRepo   *auth.MockUserRepository
-	tokenStore *auth.MockTokenStorer
+	userRepo   *authmocks.MockUserRepository
+	tokenStore *authmocks.MockTokenStorer
 }
 
 func (s *ServiceTestSuite) SetupTest() {
@@ -35,8 +36,8 @@ func (s *ServiceTestSuite) SetupTest() {
 	tm, err := jwtsvc.NewTokenManager(string(privPEM), 15*time.Minute)
 	s.Require().NoError(err)
 
-	s.userRepo = auth.NewMockUserRepository(s.T())
-	s.tokenStore = auth.NewMockTokenStorer(s.T())
+	s.userRepo = authmocks.NewMockUserRepository(s.T())
+	s.tokenStore = authmocks.NewMockTokenStorer(s.T())
 	hasher := *crypto.NewPasswordHasher()
 
 	s.svc = auth.NewAuthService(s.userRepo, hasher, *tm, s.tokenStore)

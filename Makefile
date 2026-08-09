@@ -1,4 +1,4 @@
-.PHONY: run test lint migrate-up migrate-down migrate-create swagger
+.PHONY: run test lint tools migrate-up migrate-down migrate-create swagger mock
 
 run:
 	AUTH_PORT=8080 \
@@ -11,6 +11,15 @@ test:
 
 lint:
 	golangci-lint run --timeout=5m
+
+tools:
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+	go install github.com/pressly/goose/v3/cmd/goose@latest
+	go install github.com/swaggo/swag/v2/cmd/swag@latest
+	go install github.com/vektra/mockery/v2@latest
+
+mock:
+	mockery
 
 migrate-up:
 	goose -dir migrations postgres "$(DATABASE_URL)" up

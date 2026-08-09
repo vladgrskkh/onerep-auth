@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
-	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/postgres"
+	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/postgres"
 )
 
 type UserRepoTestSuite struct {

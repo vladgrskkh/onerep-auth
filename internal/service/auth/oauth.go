@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 
 	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
-	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
-	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/oauth"
+	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/jwt"
+	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/oauth"
 )
 
 type OAuthAccountRepository interface {

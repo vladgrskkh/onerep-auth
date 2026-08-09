@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -11,6 +10,17 @@ import (
 	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 	userdomain "github.com/vladgrskkh/onerep-auth/internal/domain/user"
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
+	"github.com/vladgrskkh/onerep-auth/internal/handler/user/dto"
+)
+
+const (
+	errCodeInvalidUserID = "INVALID_USER_ID"
+	errMsgInvalidUserID  = "invalid user id"
+	errUserInvalidUserID = "The user ID is invalid"
+
+	errCodeForbidden = "FORBIDDEN"
+	errMsgForbidden  = "cannot update another user's profile"
+	errUserForbidden = "You can only update your own profile"
 )
 
 type userProfileService interface {
@@ -34,11 +44,8 @@ func NewUserHandler(svc userProfileService) *UserHandler {
 	return &UserHandler{svc: svc}
 }
 
-func (h *UserHandler) RegisterRoutes(r chi.Router) {
-	r.Get("/v1/users/{id}", h.getProfile)
-	r.Patch("/v1/users/{id}", h.updateProfile)
-}
-
+// GetProfile returns the user's profile.
+//
 // @Summary Get user profile
 // @Description Get a user's public profile (email visible only to owner)
 // @Tags users
@@ -46,14 +53,19 @@ func (h *UserHandler) RegisterRoutes(r chi.Router) {
 // @Produce json
 // @Param id path string true "User ID"
 // @Success 200 {object} authdomain.UserProfile
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
+// @Failure 400 {object} handler.ErrorResponse
+// @Failure 404 {object} handler.ErrorResponse
 // @Security BearerAuth
 // @Router /users/{id} [get]
-func (h *UserHandler) getProfile(w http.ResponseWriter, r *http.Request) {
-	userID, err := uuid.Parse(chi.URLParam(r, "id"))
-	if err != nil {
-		handler.WriteError(w, http.StatusBadRequest, "invalid user id")
+func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
+	userID, parseErr := uuid.Parse(chi.URLParam(r, "id"))
+	if parseErr != nil {
+		handler.WriteError(w, http.StatusBadRequest, handler.ErrorDetail{
+			Code:        errCodeInvalidUserID,
+			Message:     errMsgInvalidUserID,
+			UserMessage: errUserInvalidUserID,
+			Type:        handler.ErrorTypeUser,
+		})
 		return
 	}
 
@@ -61,47 +73,75 @@ func (h *UserHandler) getProfile(w http.ResponseWriter, r *http.Request) {
 
 	profile, err := h.svc.GetProfile(r.Context(), userID, requesterID)
 	if err != nil {
-		handler.WriteDomainError(w, err)
+		status, detail := mapError(err)
+		handler.WriteError(w, status, detail)
 		return
 	}
 
 	handler.WriteJSON(w, http.StatusOK, profile)
 }
 
+// UpdateProfile updates the authenticated user's profile.
+//
 // @Summary Update user profile
 // @Description Update the authenticated user's profile
 // @Tags users
 // @Accept json
 // @Produce json
 // @Param id path string true "User ID"
-// @Param request body userdomain.UpdateProfileInput true "Profile data"
+// @Param request body dto.UpdateProfileRequest true "Profile data"
 // @Success 200 {object} authdomain.UserProfile
-// @Failure 400 {object} map[string]string
-// @Failure 403 {object} map[string]string
+// @Failure 400 {object} handler.ErrorResponse
+// @Failure 403 {object} handler.ErrorResponse
 // @Security BearerAuth
 // @Router /users/{id} [patch]
-func (h *UserHandler) updateProfile(w http.ResponseWriter, r *http.Request) {
-	userID, err := uuid.Parse(chi.URLParam(r, "id"))
-	if err != nil {
-		handler.WriteError(w, http.StatusBadRequest, "invalid user id")
+func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	userID, parseErr := uuid.Parse(chi.URLParam(r, "id"))
+	if parseErr != nil {
+		handler.WriteError(w, http.StatusBadRequest, handler.ErrorDetail{
+			Code:        errCodeInvalidUserID,
+			Message:     errMsgInvalidUserID,
+			UserMessage: errUserInvalidUserID,
+			Type:        handler.ErrorTypeUser,
+		})
 		return
 	}
 
 	requesterID := handler.UserIDFromContext(r.Context())
 	if userID != requesterID {
-		handler.WriteError(w, http.StatusForbidden, "cannot update another user's profile")
+		handler.WriteError(w, http.StatusForbidden, handler.ErrorDetail{
+			Code:        errCodeForbidden,
+			Message:     errMsgForbidden,
+			UserMessage: errUserForbidden,
+			Type:        handler.ErrorTypeUser,
+		})
 		return
 	}
 
-	var input userdomain.UpdateProfileInput
-	if decErr := json.NewDecoder(r.Body).Decode(&input); decErr != nil {
-		handler.WriteError(w, http.StatusBadRequest, "invalid request body")
+	var req dto.UpdateProfileRequest
+	if decErr := handler.DecodeJSON(r, &req); decErr != nil {
+		handler.WriteError(w, http.StatusBadRequest, handler.ErrorDetail{
+			Code:        "INVALID_REQUEST_BODY",
+			Message:     "invalid request body",
+			UserMessage: "The request body is invalid",
+			Type:        handler.ErrorTypeUser,
+		})
 		return
+	}
+
+	input := userdomain.UpdateProfileInput{
+		DisplayName: req.DisplayName,
+		BirthDate:   nil, // TODO: parse from req.BirthDate
+	}
+	if req.Gender != nil {
+		g := authdomain.Gender(*req.Gender)
+		input.Gender = &g
 	}
 
 	profile, err := h.svc.UpdateProfile(r.Context(), userID, input)
 	if err != nil {
-		handler.WriteDomainError(w, err)
+		status, detail := mapError(err)
+		handler.WriteError(w, status, detail)
 		return
 	}
 

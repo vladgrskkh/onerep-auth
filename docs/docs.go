@@ -36,7 +36,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.LoginRequest"
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.LoginRequest"
                         }
                     }
                 ],
@@ -44,25 +44,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_infrastructure_jwt.TokenPair"
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_infrastructure_auth_jwt.TokenPair"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
                     }
                 }
@@ -88,7 +82,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.LogoutRequest"
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.LogoutRequest"
                         }
                     }
                 ],
@@ -99,10 +93,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
                     }
                 }
@@ -128,7 +119,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.RefreshRequest"
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.RefreshRequest"
                         }
                     }
                 ],
@@ -136,25 +127,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_infrastructure_jwt.TokenPair"
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_infrastructure_auth_jwt.TokenPair"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
                     }
                 }
@@ -180,7 +165,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.RegisterRequest"
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.RegisterRequest"
                         }
                     }
                 ],
@@ -188,25 +173,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_infrastructure_jwt.TokenPair"
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_infrastructure_auth_jwt.TokenPair"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
                     }
                 }
@@ -249,19 +228,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
                     }
                 }
@@ -297,7 +270,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_domain_user.UpdateProfileInput"
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UpdateProfileRequest"
                         }
                     }
                 ],
@@ -311,19 +284,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
                     }
                 }
@@ -331,64 +298,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.LoginRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.LogoutRequest": {
-            "type": "object",
-            "required": [
-                "refresh_token"
-            ],
-            "properties": {
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.RefreshRequest": {
-            "type": "object",
-            "required": [
-                "refresh_token"
-            ],
-            "properties": {
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.RegisterRequest": {
-            "type": "object",
-            "required": [
-                "display_name",
-                "email",
-                "password"
-            ],
-            "properties": {
-                "display_name": {
-                    "type": "string",
-                    "minLength": 1
-                },
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string",
-                    "minLength": 8
-                }
-            }
-        },
         "github_com_vladgrskkh_onerep-auth_internal_domain_auth.Gender": {
             "type": "string",
             "enum": [
@@ -428,12 +337,103 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_vladgrskkh_onerep-auth_internal_domain_user.UpdateProfileInput": {
+        "github_com_vladgrskkh_onerep-auth_internal_handler.ErrorDetail": {
             "type": "object",
             "properties": {
-                "avatar_url": {
+                "code": {
                     "type": "string"
                 },
+                "message": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorType"
+                },
+                "user_message": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorDetail"
+                }
+            }
+        },
+        "github_com_vladgrskkh_onerep-auth_internal_handler.ErrorType": {
+            "type": "string",
+            "enum": [
+                "user_error",
+                "system_error"
+            ],
+            "x-enum-varnames": [
+                "ErrorTypeUser",
+                "ErrorTypeSystem"
+            ]
+        },
+        "github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.LogoutRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.RefreshRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "display_name",
+                "email",
+                "password"
+            ],
+            "properties": {
+                "display_name": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8
+                }
+            }
+        },
+        "github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UpdateProfileRequest": {
+            "type": "object",
+            "properties": {
                 "birth_date": {
                     "type": "string"
                 },
@@ -441,11 +441,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "gender": {
-                    "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_domain_auth.Gender"
+                    "type": "string"
                 }
             }
         },
-        "github_com_vladgrskkh_onerep-auth_internal_infrastructure_jwt.TokenPair": {
+        "github_com_vladgrskkh_onerep-auth_internal_infrastructure_auth_jwt.TokenPair": {
             "type": "object",
             "properties": {
                 "access_token": {

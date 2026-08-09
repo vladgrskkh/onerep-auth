@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 
 	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
-	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/crypto"
-	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
+	"github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/crypto"
+	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/jwt"
 )
 
 type UserRepository interface {

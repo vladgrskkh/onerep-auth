@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	infrajwt "github.com/vladgrskkh/onerep-auth/internal/infrastructure/jwt"
+	infrajwt "github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/jwt"
 )
 
 type JWTTestSuite struct {
