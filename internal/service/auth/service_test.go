@@ -65,9 +65,9 @@ func (s *ServiceTestSuite) TestRegister_DuplicateEmail() {
 }
 
 func (s *ServiceTestSuite) TestRegister_InvalidEmail() {
-	s.userRepo.EXPECT().FindByEmail(mock.Anything, "bad").Return(authdomain.User{}, authdomain.ErrUserNotFound)
+	s.userRepo.EXPECT().FindByEmail(mock.Anything, "").Return(authdomain.User{}, authdomain.ErrUserNotFound)
 
-	_, err := s.svc.Register(context.Background(), "bad", "password123", "Test User")
+	_, err := s.svc.Register(context.Background(), "", "password123", "Test User")
 	s.ErrorIs(err, authdomain.ErrInvalidEmail)
 }
 

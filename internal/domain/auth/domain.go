@@ -14,7 +14,10 @@ var (
 	ErrEmailAlreadyExists = errors.New("email already exists")
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrInvalidPassword    = errors.New("password must be at least 8 characters")
-	ErrInvalidEmail       = errors.New("invalid email format")
+	ErrInvalidEmail       = errors.New("email is required")
+	ErrInvalidDisplayName = errors.New("display name must be between 1 and 100 characters")
+	ErrInvalidGender      = errors.New("invalid gender")
+	ErrInvalidBirthDate   = errors.New("birth date must be in YYYY-MM-DD format")
 	ErrOAuthAccountExists = errors.New("oauth account already linked")
 	ErrTokenNotFound      = errors.New("refresh token not found or expired")
 )
@@ -26,6 +29,16 @@ const (
 	GenderFemale Gender = "female"
 	GenderOther  Gender = "other"
 )
+
+// IsValid reports whether g is one of the supported gender values.
+func (g Gender) IsValid() bool {
+	switch g {
+	case GenderMale, GenderFemale, GenderOther:
+		return true
+	default:
+		return false
+	}
+}
 
 type OAuthProvider string
 
@@ -55,24 +68,33 @@ type OAuthAccount struct {
 	CreatedAt      time.Time
 }
 
-const minPasswordLength = 8
+const (
+	minPasswordLength    = 8
+	MaxDisplayNameLength = 100
+)
 
+// NewUser builds a new user. Email format is validated at the request
+// boundary, not here; the domain only enforces a non-empty email (lowercased)
+// and a password of at least 8 runes. Display name is trimmed and capped at
+// MaxDisplayNameLength.
 func NewUser(email, password, displayName string) (User, error) {
-	if !strings.Contains(email, "@") {
+	if strings.TrimSpace(email) == "" {
 		return User{}, ErrInvalidEmail
 	}
 	if utf8.RuneCountInString(password) < minPasswordLength {
 		return User{}, ErrInvalidPassword
 	}
-	if strings.TrimSpace(displayName) == "" {
-		return User{}, ErrInvalidCredentials
+
+	name := strings.TrimSpace(displayName)
+	if name == "" || utf8.RuneCountInString(name) > MaxDisplayNameLength {
+		return User{}, ErrInvalidDisplayName
 	}
 
 	now := time.Now()
 	return User{
 		ID:          uuid.Must(uuid.NewV7()),
 		Email:       strings.ToLower(email),
-		DisplayName: displayName,
+		DisplayName: name,
 		Gender:      GenderOther,
 		CreatedAt:   now,
 		UpdatedAt:   now,
