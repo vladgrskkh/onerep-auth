@@ -10,13 +10,6 @@ import (
 	userdomain "github.com/vladgrskkh/onerep-auth/internal/domain/user"
 )
 
-type UpdateProfileInput struct {
-	DisplayName *string
-	Gender      *authdomain.Gender
-	BirthDate   *time.Time
-	AvatarURL   *string
-}
-
 type UserProfileFinder interface {
 	FindByID(ctx context.Context, id uuid.UUID) (authdomain.User, error)
 }
@@ -44,10 +37,9 @@ func (s *UserService) GetProfile(ctx context.Context, userID, requesterID uuid.U
 
 func (s *UserService) UpdateProfile(
 	ctx context.Context,
-	userID uuid.UUID,
-	input UpdateProfileInput,
+	input userdomain.UpdateProfileInput,
 ) (userdomain.UserProfile, error) {
-	u, err := s.finder.FindByID(ctx, userID)
+	u, err := s.finder.FindByID(ctx, input.UserID)
 	if err != nil {
 		return userdomain.UserProfile{}, err
 	}
@@ -71,5 +63,5 @@ func (s *UserService) UpdateProfile(
 		return userdomain.UserProfile{}, err
 	}
 
-	return userdomain.ToProfile(updated, userID), nil
+	return userdomain.ToProfile(updated, input.UserID), nil
 }

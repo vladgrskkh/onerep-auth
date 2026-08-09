@@ -8,6 +8,15 @@ import (
 	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 )
 
+// UpdateProfileInput is the domain command for updating a user profile.
+type UpdateProfileInput struct {
+	UserID      uuid.UUID
+	DisplayName *string
+	Gender      *authdomain.Gender
+	BirthDate   *time.Time
+	AvatarURL   *string
+}
+
 type UserProfile struct {
 	ID          uuid.UUID
 	DisplayName string

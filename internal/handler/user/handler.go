@@ -12,15 +12,13 @@ import (
 	userdomain "github.com/vladgrskkh/onerep-auth/internal/domain/user"
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/user/dto"
-	userservice "github.com/vladgrskkh/onerep-auth/internal/service/user"
 )
 
 type userProfileService interface {
 	GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (userdomain.UserProfile, error)
 	UpdateProfile(
 		ctx context.Context,
-		userID uuid.UUID,
-		input userservice.UpdateProfileInput,
+		input userdomain.UpdateProfileInput,
 	) (userdomain.UserProfile, error)
 }
 
@@ -102,13 +100,13 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input := userservice.UpdateProfileInput{DisplayName: req.DisplayName}
+	input := userdomain.UpdateProfileInput{UserID: userID, DisplayName: req.DisplayName}
 	if req.Gender != nil {
 		g := authdomain.Gender(*req.Gender)
 		input.Gender = &g
 	}
 
-	profile, err := h.svc.UpdateProfile(r.Context(), userID, input)
+	profile, err := h.svc.UpdateProfile(r.Context(), input)
 	if err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, h.logger, status, detail)

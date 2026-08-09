@@ -29,10 +29,10 @@ cmd/server/              # Entry point (thin)
 internal/
   domain/
     auth/                # User, OAuthAccount, Gender, errors — pure, no JSON
-    user/                # UserProfile read model, ToProfile
+    user/                # UserProfile read model, UpdateProfileInput, ToProfile
   service/
     auth/                # AuthService, OAuthService + consumer interfaces
-    user/                # UserService + UpdateProfileInput (no json tags)
+    user/                # UserService (operates on domain types)
   handler/
     auth/                # handlers + dto/ + error_mapper.go
     user/                # handlers + dto/ + error_mapper.go + mapper.go
