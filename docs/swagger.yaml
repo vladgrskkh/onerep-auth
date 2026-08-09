@@ -4,6 +4,10 @@ definitions:
     properties:
       code:
         type: string
+      details:
+        items:
+          $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ValidationDetail'
+        type: array
       message:
         type: string
       user_message:
@@ -13,6 +17,15 @@ definitions:
     properties:
       error:
         $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorDetail'
+    type: object
+  github_com_vladgrskkh_onerep-auth_internal_handler.ValidationDetail:
+    properties:
+      field:
+        type: string
+      param:
+        type: string
+      tag:
+        type: string
     type: object
   github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.LoginRequest:
     properties:
@@ -55,11 +68,18 @@ definitions:
     type: object
   github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UpdateProfileRequest:
     properties:
+      avatar_url:
+        type: string
       birth_date:
         type: string
       display_name:
+        maxLength: 100
         type: string
       gender:
+        enum:
+        - male
+        - female
+        - other
         type: string
     type: object
   github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfileResponse:

@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -11,19 +12,22 @@ import (
 	userdomain "github.com/vladgrskkh/onerep-auth/internal/domain/user"
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/user/dto"
+	serviceuser "github.com/vladgrskkh/onerep-auth/internal/service/user"
 )
 
-type userProfileService interface {
+// UserProfileService is the user profile use-case contract consumed by the
+// handler.
+type UserProfileService interface {
 	GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (userdomain.UserProfile, error)
-	UpdateProfile(ctx context.Context, profile userdomain.UserProfile) (userdomain.UserProfile, error)
+	UpdateProfile(ctx context.Context, cmd serviceuser.UpdateProfileCommand) (userdomain.UserProfile, error)
 }
 
 type UserHandler struct {
-	svc    userProfileService
+	svc    UserProfileService
 	logger *slog.Logger
 }
 
-func NewUserHandler(svc userProfileService, logger *slog.Logger) *UserHandler {
+func NewUserHandler(svc UserProfileService, logger *slog.Logger) *UserHandler {
 	return &UserHandler{svc: svc, logger: logger}
 }
 
@@ -87,18 +91,18 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req dto.UpdateProfileRequest
-	if err := handler.DecodeJSON(r, &req); err != nil {
+	if err := handler.DecodeAndValidate(r, &req); err != nil {
+		if errors.Is(err, handler.ErrValidationFailed) {
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail(err))
+			return
+		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
 
-	profile, detail := toUpdateProfile(req, userID)
-	if detail.Code != "" {
-		handler.WriteError(w, h.logger, http.StatusBadRequest, detail)
-		return
-	}
+	cmd := toUpdateProfile(req, userID)
 
-	updated, err := h.svc.UpdateProfile(r.Context(), profile)
+	updated, err := h.svc.UpdateProfile(r.Context(), cmd)
 	if err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, h.logger, status, detail)

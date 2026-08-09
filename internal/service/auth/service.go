@@ -45,18 +45,18 @@ func NewAuthService(
 	}
 }
 
-func (s *AuthService) Register(ctx context.Context, email, password, displayName string) (TokenPair, error) {
-	_, err := s.users.FindByEmail(ctx, email)
+func (s *AuthService) Register(ctx context.Context, cmd RegisterCommand) (TokenPair, error) {
+	_, err := s.users.FindByEmail(ctx, cmd.Email)
 	if err == nil {
 		return TokenPair{}, authdomain.ErrEmailAlreadyExists
 	}
 
-	user, err := authdomain.NewUser(email, password, displayName)
+	user, err := authdomain.NewUser(cmd.Email, cmd.Password, cmd.DisplayName)
 	if err != nil {
 		return TokenPair{}, err
 	}
 
-	hash, err := s.hasher.Hash(password)
+	hash, err := s.hasher.Hash(cmd.Password)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -79,8 +79,8 @@ func (s *AuthService) Register(ctx context.Context, email, password, displayName
 	return pair, nil
 }
 
-func (s *AuthService) Login(ctx context.Context, email, password string) (TokenPair, error) {
-	user, err := s.users.FindByEmail(ctx, email)
+func (s *AuthService) Login(ctx context.Context, cmd LoginCommand) (TokenPair, error) {
+	user, err := s.users.FindByEmail(ctx, cmd.Email)
 	if err != nil {
 		return TokenPair{}, authdomain.ErrInvalidCredentials
 	}
@@ -89,7 +89,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (TokenP
 		return TokenPair{}, authdomain.ErrInvalidCredentials
 	}
 
-	if cmpErr := s.hasher.Compare(*user.PasswordHash, password); cmpErr != nil {
+	if cmpErr := s.hasher.Compare(*user.PasswordHash, cmd.Password); cmpErr != nil {
 		return TokenPair{}, authdomain.ErrInvalidCredentials
 	}
 
@@ -105,17 +105,17 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (TokenP
 	return pair, nil
 }
 
-func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
-	return s.tokenStore.Delete(ctx, refreshToken)
+func (s *AuthService) Logout(ctx context.Context, cmd LogoutCommand) error {
+	return s.tokenStore.Delete(ctx, cmd.RefreshToken)
 }
 
-func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (TokenPair, error) {
-	userIDStr, err := s.tokenStore.Get(ctx, refreshToken)
+func (s *AuthService) Refresh(ctx context.Context, cmd RefreshCommand) (TokenPair, error) {
+	userIDStr, err := s.tokenStore.Get(ctx, cmd.RefreshToken)
 	if err != nil {
 		return TokenPair{}, authdomain.ErrTokenNotFound
 	}
 
-	if delErr := s.tokenStore.Delete(ctx, refreshToken); delErr != nil {
+	if delErr := s.tokenStore.Delete(ctx, cmd.RefreshToken); delErr != nil {
 		return TokenPair{}, delErr
 	}
 

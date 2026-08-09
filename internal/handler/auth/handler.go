@@ -2,28 +2,31 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 
 	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/jwt"
+	authsvc "github.com/vladgrskkh/onerep-auth/internal/service/auth"
 
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/auth/dto"
 )
 
-type authService interface {
-	Register(ctx context.Context, email, password, displayName string) (jwtsvc.TokenPair, error)
-	Login(ctx context.Context, email, password string) (jwtsvc.TokenPair, error)
-	Logout(ctx context.Context, refreshToken string) error
-	Refresh(ctx context.Context, refreshToken string) (jwtsvc.TokenPair, error)
+// AuthService is the auth use-case contract consumed by the handler.
+type AuthService interface {
+	Register(ctx context.Context, cmd authsvc.RegisterCommand) (jwtsvc.TokenPair, error)
+	Login(ctx context.Context, cmd authsvc.LoginCommand) (jwtsvc.TokenPair, error)
+	Logout(ctx context.Context, cmd authsvc.LogoutCommand) error
+	Refresh(ctx context.Context, cmd authsvc.RefreshCommand) (jwtsvc.TokenPair, error)
 }
 
 type AuthHandler struct {
-	svc    authService
+	svc    AuthService
 	logger *slog.Logger
 }
 
-func NewAuthHandler(svc authService, logger *slog.Logger) *AuthHandler {
+func NewAuthHandler(svc AuthService, logger *slog.Logger) *AuthHandler {
 	return &AuthHandler{svc: svc, logger: logger}
 }
 
@@ -41,12 +44,20 @@ func NewAuthHandler(svc authService, logger *slog.Logger) *AuthHandler {
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req dto.RegisterRequest
-	if err := handler.DecodeJSON(r, &req); err != nil {
+	if err := handler.DecodeAndValidate(r, &req); err != nil {
+		if errors.Is(err, handler.ErrValidationFailed) {
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail(err))
+			return
+		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
 
-	pair, err := h.svc.Register(r.Context(), req.Email, req.Password, req.DisplayName)
+	pair, err := h.svc.Register(r.Context(), authsvc.RegisterCommand{
+		Email:       req.Email,
+		Password:    req.Password,
+		DisplayName: req.DisplayName,
+	})
 	if err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, h.logger, status, detail)
@@ -70,12 +81,19 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginRequest
-	if err := handler.DecodeJSON(r, &req); err != nil {
+	if err := handler.DecodeAndValidate(r, &req); err != nil {
+		if errors.Is(err, handler.ErrValidationFailed) {
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail(err))
+			return
+		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
 
-	pair, err := h.svc.Login(r.Context(), req.Email, req.Password)
+	pair, err := h.svc.Login(r.Context(), authsvc.LoginCommand{
+		Email:    req.Email,
+		Password: req.Password,
+	})
 	if err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, h.logger, status, detail)
@@ -98,12 +116,16 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Router /auth/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	var req dto.LogoutRequest
-	if err := handler.DecodeJSON(r, &req); err != nil {
+	if err := handler.DecodeAndValidate(r, &req); err != nil {
+		if errors.Is(err, handler.ErrValidationFailed) {
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail(err))
+			return
+		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
 
-	if err := h.svc.Logout(r.Context(), req.RefreshToken); err != nil {
+	if err := h.svc.Logout(r.Context(), authsvc.LogoutCommand{RefreshToken: req.RefreshToken}); err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, h.logger, status, detail)
 		return
@@ -126,12 +148,16 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Router /auth/refresh [post]
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var req dto.RefreshRequest
-	if err := handler.DecodeJSON(r, &req); err != nil {
+	if err := handler.DecodeAndValidate(r, &req); err != nil {
+		if errors.Is(err, handler.ErrValidationFailed) {
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail(err))
+			return
+		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
 
-	pair, err := h.svc.Refresh(r.Context(), req.RefreshToken)
+	pair, err := h.svc.Refresh(r.Context(), authsvc.RefreshCommand{RefreshToken: req.RefreshToken})
 	if err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, h.logger, status, detail)

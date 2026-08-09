@@ -304,6 +304,12 @@ const docTemplate = `{
                 "code": {
                     "type": "string"
                 },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ValidationDetail"
+                    }
+                },
                 "message": {
                     "type": "string"
                 },
@@ -317,6 +323,20 @@ const docTemplate = `{
             "properties": {
                 "error": {
                     "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorDetail"
+                }
+            }
+        },
+        "github_com_vladgrskkh_onerep-auth_internal_handler.ValidationDetail": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string"
+                },
+                "param": {
+                    "type": "string"
+                },
+                "tag": {
+                    "type": "string"
                 }
             }
         },
@@ -381,14 +401,23 @@ const docTemplate = `{
         "github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UpdateProfileRequest": {
             "type": "object",
             "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
                 "birth_date": {
                     "type": "string"
                 },
                 "display_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 100
                 },
                 "gender": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "male",
+                        "female",
+                        "other"
+                    ]
                 }
             }
         },

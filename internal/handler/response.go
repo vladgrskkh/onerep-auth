@@ -2,16 +2,27 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type ErrorCode string
 
 type ErrorDetail struct {
-	Code        ErrorCode `json:"code"`
-	Message     string    `json:"message"`
-	UserMessage string    `json:"user_message,omitempty"`
+	Code        ErrorCode          `json:"code"`
+	Message     string             `json:"message"`
+	UserMessage string             `json:"user_message,omitempty"`
+	Details     []ValidationDetail `json:"details,omitempty"`
+}
+
+// ValidationDetail describes a single failed request field validation.
+type ValidationDetail struct {
+	Field string `json:"field,omitempty"`
+	Tag   string `json:"tag,omitempty"`
+	Param string `json:"param,omitempty"`
 }
 
 type ErrorResponse struct {
@@ -38,4 +49,27 @@ func WriteSystemError(w http.ResponseWriter, logger *slog.Logger, status int, er
 		Code:    "INTERNAL_ERROR",
 		Message: err.Error(),
 	})
+}
+
+// ValidationErrorDetail builds the 400 response for a failed request
+// validation, carrying per-field details extracted from the validator error.
+func ValidationErrorDetail(err error) ErrorDetail {
+	detail := ErrorDetail{
+		Code:        "VALIDATION_ERROR",
+		Message:     "request validation failed",
+		UserMessage: "Please check your input",
+	}
+
+	var verrs validator.ValidationErrors
+	if errors.As(err, &verrs) {
+		for _, fe := range verrs {
+			detail.Details = append(detail.Details, ValidationDetail{
+				Field: fe.Field(),
+				Tag:   fe.Tag(),
+				Param: fe.Param(),
+			})
+		}
+	}
+
+	return detail
 }

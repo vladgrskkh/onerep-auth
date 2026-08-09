@@ -48,6 +48,12 @@ func mapError(err error) (int, handler.ErrorDetail) {
 			Message:     err.Error(),
 			UserMessage: "Password must be at least 8 characters long",
 		}
+	case errors.Is(err, authdomain.ErrInvalidDisplayName):
+		return http.StatusBadRequest, handler.ErrorDetail{
+			Code:        "INVALID_DISPLAY_NAME",
+			Message:     err.Error(),
+			UserMessage: "Display name must be between 1 and 100 characters",
+		}
 	case errors.Is(err, authdomain.ErrUserNotFound):
 		return http.StatusNotFound, handler.ErrorDetail{
 			Code:        "USER_NOT_FOUND",
