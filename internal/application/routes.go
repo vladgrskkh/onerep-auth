@@ -19,7 +19,7 @@ func (app *Application) RegisterRoutes(tokenValidator middleware.JWTValidator) h
 	r.Use(chimw.Recoverer)
 	r.Use(chimw.RequestID)
 
-	r.Get("/v1/health", healthHandler)
+	r.Get("/v1/health", app.healthHandler)
 	r.Get("/v1/.well-known/jwks.json", app.jwksHandler)
 	r.Get("/v1/docs/*", httpSwagger.WrapHandler)
 
@@ -37,6 +37,6 @@ func (app *Application) RegisterRoutes(tokenValidator middleware.JWTValidator) h
 	return r
 }
 
-func healthHandler(w http.ResponseWriter, _ *http.Request) {
-	handler.WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+func (app *Application) healthHandler(w http.ResponseWriter, _ *http.Request) {
+	handler.WriteJSON(w, app.logger, http.StatusOK, map[string]string{"status": "ok"})
 }

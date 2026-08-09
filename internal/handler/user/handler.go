@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -24,15 +25,16 @@ type userProfileService interface {
 }
 
 type UserHandler struct {
-	svc userProfileService
+	svc    userProfileService
+	logger *slog.Logger
 }
 
-func NewUserHandler(svc userProfileService) *UserHandler {
-	return &UserHandler{svc: svc}
+func NewUserHandler(svc userProfileService, logger *slog.Logger) *UserHandler {
+	return &UserHandler{svc: svc, logger: logger}
 }
 
 func (h *UserHandler) writeInvalidBody(w http.ResponseWriter) {
-	handler.WriteError(w, http.StatusBadRequest, invalidRequestBodyDetail())
+	handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 }
 
 // GetProfile returns the user's profile.
@@ -51,7 +53,7 @@ func (h *UserHandler) writeInvalidBody(w http.ResponseWriter) {
 func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	userID, parseErr := uuid.Parse(chi.URLParam(r, "id"))
 	if parseErr != nil {
-		handler.WriteError(w, http.StatusBadRequest, invalidUserIDDetail())
+		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidUserIDDetail())
 		return
 	}
 
@@ -60,11 +62,11 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	profile, err := h.svc.GetProfile(r.Context(), userID, requesterID)
 	if err != nil {
 		status, detail := mapError(err)
-		handler.WriteError(w, status, detail)
+		handler.WriteError(w, h.logger, status, detail)
 		return
 	}
 
-	handler.WriteJSON(w, http.StatusOK, toProfileResponse(profile))
+	handler.WriteJSON(w, h.logger, http.StatusOK, toProfileResponse(profile))
 }
 
 // UpdateProfile updates the authenticated user's profile.
@@ -84,13 +86,13 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	userID, parseErr := uuid.Parse(chi.URLParam(r, "id"))
 	if parseErr != nil {
-		handler.WriteError(w, http.StatusBadRequest, invalidUserIDDetail())
+		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidUserIDDetail())
 		return
 	}
 
 	requesterID := handler.UserIDFromContext(r.Context())
 	if userID != requesterID {
-		handler.WriteError(w, http.StatusForbidden, forbiddenDetail())
+		handler.WriteError(w, h.logger, http.StatusForbidden, forbiddenDetail())
 		return
 	}
 
@@ -109,9 +111,9 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	profile, err := h.svc.UpdateProfile(r.Context(), userID, input)
 	if err != nil {
 		status, detail := mapError(err)
-		handler.WriteError(w, status, detail)
+		handler.WriteError(w, h.logger, status, detail)
 		return
 	}
 
-	handler.WriteJSON(w, http.StatusOK, toProfileResponse(profile))
+	handler.WriteJSON(w, h.logger, http.StatusOK, toProfileResponse(profile))
 }

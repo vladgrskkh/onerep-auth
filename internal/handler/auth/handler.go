@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/jwt"
@@ -18,15 +19,16 @@ type authService interface {
 }
 
 type AuthHandler struct {
-	svc authService
+	svc    authService
+	logger *slog.Logger
 }
 
-func NewAuthHandler(svc authService) *AuthHandler {
-	return &AuthHandler{svc: svc}
+func NewAuthHandler(svc authService, logger *slog.Logger) *AuthHandler {
+	return &AuthHandler{svc: svc, logger: logger}
 }
 
 func (h *AuthHandler) writeInvalidBody(w http.ResponseWriter) {
-	handler.WriteError(w, http.StatusBadRequest, invalidRequestBodyDetail())
+	handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 }
 
 // Register handles user registration.
@@ -51,11 +53,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	pair, err := h.svc.Register(r.Context(), req.Email, req.Password, req.DisplayName)
 	if err != nil {
 		status, detail := mapError(err)
-		handler.WriteError(w, status, detail)
+		handler.WriteError(w, h.logger, status, detail)
 		return
 	}
 
-	handler.WriteJSON(w, http.StatusCreated, pair)
+	handler.WriteJSON(w, h.logger, http.StatusCreated, pair)
 }
 
 // Login handles user authentication.
@@ -80,11 +82,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	pair, err := h.svc.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
 		status, detail := mapError(err)
-		handler.WriteError(w, status, detail)
+		handler.WriteError(w, h.logger, status, detail)
 		return
 	}
 
-	handler.WriteJSON(w, http.StatusOK, pair)
+	handler.WriteJSON(w, h.logger, http.StatusOK, pair)
 }
 
 // Logout invalidates the refresh token.
@@ -107,7 +109,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.svc.Logout(r.Context(), req.RefreshToken); err != nil {
 		status, detail := mapError(err)
-		handler.WriteError(w, status, detail)
+		handler.WriteError(w, h.logger, status, detail)
 		return
 	}
 
@@ -136,9 +138,9 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	pair, err := h.svc.Refresh(r.Context(), req.RefreshToken)
 	if err != nil {
 		status, detail := mapError(err)
-		handler.WriteError(w, status, detail)
+		handler.WriteError(w, h.logger, status, detail)
 		return
 	}
 
-	handler.WriteJSON(w, http.StatusOK, pair)
+	handler.WriteJSON(w, h.logger, http.StatusOK, pair)
 }

@@ -116,9 +116,9 @@ func (app *Application) Run(ctx context.Context) error {
 	authSvc := authservice.NewAuthService(userRepo, *hasher, *tm, tokenStore)
 	userSvc := userservice.NewUserService(userRepo, userRepo)
 
-	app.authHandler = authhandler.NewAuthHandler(authSvc)
-	app.userHandler = userhandler.NewUserHandler(userSvc)
-	app.jwksHandler = handler.JWKSHandler(tm.PublicKey)
+	app.authHandler = authhandler.NewAuthHandler(authSvc, app.logger)
+	app.userHandler = userhandler.NewUserHandler(userSvc, app.logger)
+	app.jwksHandler = handler.JWKSHandler(tm.PublicKey, app.logger)
 
 	app.server = &http.Server{
 		Addr:              ":" + app.cfg.Port,
