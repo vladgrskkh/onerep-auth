@@ -35,26 +35,27 @@ func (s *UserService) GetProfile(ctx context.Context, userID, requesterID uuid.U
 	return userdomain.ToProfile(u, requesterID), nil
 }
 
+// UpdateProfile applies the non-nil fields of the profile to the stored user.
 func (s *UserService) UpdateProfile(
 	ctx context.Context,
-	input userdomain.UpdateProfileInput,
+	profile userdomain.UserProfile,
 ) (userdomain.UserProfile, error) {
-	u, err := s.finder.FindByID(ctx, input.UserID)
+	u, err := s.finder.FindByID(ctx, profile.ID)
 	if err != nil {
 		return userdomain.UserProfile{}, err
 	}
 
-	if input.DisplayName != nil {
-		u.DisplayName = *input.DisplayName
+	if profile.DisplayName != nil {
+		u.DisplayName = *profile.DisplayName
 	}
-	if input.Gender != nil {
-		u.Gender = *input.Gender
+	if profile.Gender != nil {
+		u.Gender = *profile.Gender
 	}
-	if input.BirthDate != nil {
-		u.BirthDate = input.BirthDate
+	if profile.BirthDate != nil {
+		u.BirthDate = profile.BirthDate
 	}
-	if input.AvatarURL != nil {
-		u.AvatarURL = input.AvatarURL
+	if profile.AvatarURL != nil {
+		u.AvatarURL = profile.AvatarURL
 	}
 
 	u.UpdatedAt = time.Now()
@@ -63,5 +64,5 @@ func (s *UserService) UpdateProfile(
 		return userdomain.UserProfile{}, err
 	}
 
-	return userdomain.ToProfile(updated, input.UserID), nil
+	return userdomain.ToProfile(updated, profile.ID), nil
 }

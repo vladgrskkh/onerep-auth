@@ -8,7 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 	userdomain "github.com/vladgrskkh/onerep-auth/internal/domain/user"
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/user/dto"
@@ -16,10 +15,7 @@ import (
 
 type userProfileService interface {
 	GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (userdomain.UserProfile, error)
-	UpdateProfile(
-		ctx context.Context,
-		input userdomain.UpdateProfileInput,
-	) (userdomain.UserProfile, error)
+	UpdateProfile(ctx context.Context, profile userdomain.UserProfile) (userdomain.UserProfile, error)
 }
 
 type UserHandler struct {
@@ -29,10 +25,6 @@ type UserHandler struct {
 
 func NewUserHandler(svc userProfileService, logger *slog.Logger) *UserHandler {
 	return &UserHandler{svc: svc, logger: logger}
-}
-
-func (h *UserHandler) writeInvalidBody(w http.ResponseWriter) {
-	handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 }
 
 // GetProfile returns the user's profile.
@@ -96,22 +88,22 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.UpdateProfileRequest
 	if err := handler.DecodeJSON(r, &req); err != nil {
-		h.writeInvalidBody(w)
+		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
 
-	input := userdomain.UpdateProfileInput{UserID: userID, DisplayName: req.DisplayName}
-	if req.Gender != nil {
-		g := authdomain.Gender(*req.Gender)
-		input.Gender = &g
+	profile, detail := toUpdateProfile(req, userID)
+	if detail.Code != "" {
+		handler.WriteError(w, h.logger, http.StatusBadRequest, detail)
+		return
 	}
 
-	profile, err := h.svc.UpdateProfile(r.Context(), input)
+	updated, err := h.svc.UpdateProfile(r.Context(), profile)
 	if err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, h.logger, status, detail)
 		return
 	}
 
-	handler.WriteJSON(w, h.logger, http.StatusOK, toProfileResponse(profile))
+	handler.WriteJSON(w, h.logger, http.StatusOK, toProfileResponse(updated))
 }

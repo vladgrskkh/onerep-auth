@@ -30,7 +30,7 @@ func (s *DomainTestSuite) TestToProfile_Other() {
 	profile := user.ToProfile(u, uuid.New())
 	s.Nil(profile.Email)
 	s.Nil(profile.BirthDate)
-	s.Equal("Alice", profile.DisplayName)
+	s.Equal("Alice", *profile.DisplayName)
 }
 
 func TestDomainSuite(t *testing.T) {

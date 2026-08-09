@@ -20,6 +20,10 @@ const (
 	errCodeInvalidRequestBody = "INVALID_REQUEST_BODY"
 	errMsgInvalidRequestBody  = "invalid request body"
 	errUserInvalidRequestBody = "The request body is invalid"
+
+	errCodeInvalidBirthDate = "INVALID_BIRTH_DATE"
+	errMsgInvalidBirthDate  = "invalid birth date"
+	errUserInvalidBirthDate = "Birth date must be in YYYY-MM-DD format"
 )
 
 func invalidUserIDDetail() handler.ErrorDetail {
@@ -43,6 +47,14 @@ func invalidRequestBodyDetail() handler.ErrorDetail {
 		Code:        errCodeInvalidRequestBody,
 		Message:     errMsgInvalidRequestBody,
 		UserMessage: errUserInvalidRequestBody,
+	}
+}
+
+func errInvalidBirthDate() handler.ErrorDetail {
+	return handler.ErrorDetail{
+		Code:        errCodeInvalidBirthDate,
+		Message:     errMsgInvalidBirthDate,
+		UserMessage: errUserInvalidBirthDate,
 	}
 }
 

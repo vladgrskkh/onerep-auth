@@ -27,10 +27,6 @@ func NewAuthHandler(svc authService, logger *slog.Logger) *AuthHandler {
 	return &AuthHandler{svc: svc, logger: logger}
 }
 
-func (h *AuthHandler) writeInvalidBody(w http.ResponseWriter) {
-	handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
-}
-
 // Register handles user registration.
 //
 // @Summary Register a new user
@@ -46,7 +42,7 @@ func (h *AuthHandler) writeInvalidBody(w http.ResponseWriter) {
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req dto.RegisterRequest
 	if err := handler.DecodeJSON(r, &req); err != nil {
-		h.writeInvalidBody(w)
+		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
 
@@ -75,7 +71,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginRequest
 	if err := handler.DecodeJSON(r, &req); err != nil {
-		h.writeInvalidBody(w)
+		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
 
@@ -103,7 +99,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	var req dto.LogoutRequest
 	if err := handler.DecodeJSON(r, &req); err != nil {
-		h.writeInvalidBody(w)
+		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
 
@@ -131,7 +127,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var req dto.RefreshRequest
 	if err := handler.DecodeJSON(r, &req); err != nil {
-		h.writeInvalidBody(w)
+		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
 

@@ -8,20 +8,13 @@ import (
 	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 )
 
-// UpdateProfileInput is the domain command for updating a user profile.
-type UpdateProfileInput struct {
-	UserID      uuid.UUID
-	DisplayName *string
-	Gender      *authdomain.Gender
-	BirthDate   *time.Time
-	AvatarURL   *string
-}
-
+// UserProfile is the domain type for the user profile. It serves both as the
+// read model and as the update command: nil fields are not updated.
 type UserProfile struct {
 	ID          uuid.UUID
-	DisplayName string
+	DisplayName *string
 	AvatarURL   *string
-	Gender      authdomain.Gender
+	Gender      *authdomain.Gender
 	Email       *string
 	BirthDate   *time.Time
 	CreatedAt   time.Time
@@ -30,15 +23,18 @@ type UserProfile struct {
 // ToProfile builds the profile read model. Email and birth date are private
 // and only visible to the profile owner.
 func ToProfile(u authdomain.User, requesterID uuid.UUID) UserProfile {
+	displayName := u.DisplayName
+	gender := u.Gender
 	profile := UserProfile{
 		ID:          u.ID,
-		DisplayName: u.DisplayName,
+		DisplayName: &displayName,
 		AvatarURL:   u.AvatarURL,
-		Gender:      u.Gender,
+		Gender:      &gender,
 		CreatedAt:   u.CreatedAt,
 	}
 	if u.ID == requesterID {
-		profile.Email = &u.Email
+		email := u.Email
+		profile.Email = &email
 		profile.BirthDate = u.BirthDate
 	}
 	return profile
