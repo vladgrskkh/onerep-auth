@@ -7,9 +7,9 @@ import (
 )
 
 type UpdateProfileRequest struct {
-	DisplayName *string `json:"display_name,omitzero"`
-	Gender      *string `json:"gender,omitzero"`
-	BirthDate   *string `json:"birth_date,omitzero"`
+	DisplayName *string `json:"display_name,omitzero" validate:"omitempty,max=100"`
+	Gender      *string `json:"gender,omitzero"       validate:"omitempty,oneof=male female other"`
+	BirthDate   *string `json:"birth_date,omitzero"   validate:"omitempty,datetime=2006-01-02"`
 }
 
 type UserProfileResponse struct {

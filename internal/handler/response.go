@@ -39,3 +39,11 @@ func WriteSystemError(w http.ResponseWriter, logger *slog.Logger, status int, er
 		Message: err.Error(),
 	})
 }
+
+func ValidationErrorDetail() ErrorDetail {
+	return ErrorDetail{
+		Code:        "VALIDATION_ERROR",
+		Message:     "request validation failed",
+		UserMessage: "Please check your input",
+	}
+}

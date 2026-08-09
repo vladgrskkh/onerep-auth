@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -41,7 +42,11 @@ func NewAuthHandler(svc authService, logger *slog.Logger) *AuthHandler {
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req dto.RegisterRequest
-	if err := handler.DecodeJSON(r, &req); err != nil {
+	if err := handler.DecodeAndValidate(r, &req); err != nil {
+		if errors.Is(err, handler.ErrValidationFailed) {
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail())
+			return
+		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
@@ -70,7 +75,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginRequest
-	if err := handler.DecodeJSON(r, &req); err != nil {
+	if err := handler.DecodeAndValidate(r, &req); err != nil {
+		if errors.Is(err, handler.ErrValidationFailed) {
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail())
+			return
+		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
@@ -98,7 +107,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Router /auth/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	var req dto.LogoutRequest
-	if err := handler.DecodeJSON(r, &req); err != nil {
+	if err := handler.DecodeAndValidate(r, &req); err != nil {
+		if errors.Is(err, handler.ErrValidationFailed) {
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail())
+			return
+		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
@@ -126,7 +139,11 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Router /auth/refresh [post]
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var req dto.RefreshRequest
-	if err := handler.DecodeJSON(r, &req); err != nil {
+	if err := handler.DecodeAndValidate(r, &req); err != nil {
+		if errors.Is(err, handler.ErrValidationFailed) {
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail())
+			return
+		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}

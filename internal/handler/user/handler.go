@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -87,7 +88,11 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req dto.UpdateProfileRequest
-	if err := handler.DecodeJSON(r, &req); err != nil {
+	if err := handler.DecodeAndValidate(r, &req); err != nil {
+		if errors.Is(err, handler.ErrValidationFailed) {
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail())
+			return
+		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
 		return
 	}
