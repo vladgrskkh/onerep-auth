@@ -10,25 +10,21 @@ import (
 	userdomain "github.com/vladgrskkh/onerep-auth/internal/domain/user"
 )
 
-type UserProfileFinder interface {
+type UserProfileRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (authdomain.User, error)
-}
-
-type UserProfileUpdater interface {
 	Update(ctx context.Context, user authdomain.User) (authdomain.User, error)
 }
 
 type UserService struct {
-	finder  UserProfileFinder
-	updater UserProfileUpdater
+	users UserProfileRepository
 }
 
-func NewUserService(finder UserProfileFinder, updater UserProfileUpdater) *UserService {
-	return &UserService{finder: finder, updater: updater}
+func NewUserService(users UserProfileRepository) *UserService {
+	return &UserService{users: users}
 }
 
 func (s *UserService) GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (userdomain.UserProfile, error) {
-	u, err := s.finder.FindByID(ctx, userID)
+	u, err := s.users.FindByID(ctx, userID)
 	if err != nil {
 		return userdomain.UserProfile{}, err
 	}
@@ -40,7 +36,7 @@ func (s *UserService) UpdateProfile(
 	ctx context.Context,
 	profile userdomain.UserProfile,
 ) (userdomain.UserProfile, error) {
-	u, err := s.finder.FindByID(ctx, profile.ID)
+	u, err := s.users.FindByID(ctx, profile.ID)
 	if err != nil {
 		return userdomain.UserProfile{}, err
 	}
@@ -59,7 +55,7 @@ func (s *UserService) UpdateProfile(
 	}
 
 	u.UpdatedAt = time.Now()
-	updated, err := s.updater.Update(ctx, u)
+	updated, err := s.users.Update(ctx, u)
 	if err != nil {
 		return userdomain.UserProfile{}, err
 	}

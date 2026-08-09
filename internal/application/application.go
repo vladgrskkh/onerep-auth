@@ -114,7 +114,7 @@ func (app *Application) Run(ctx context.Context) error {
 	tokenStore := redis.NewTokenStore(app.redis, app.cfg.RefreshTokenTTL)
 
 	authSvc := authservice.NewAuthService(userRepo, *hasher, *tm, tokenStore)
-	userSvc := userservice.NewUserService(userRepo, userRepo)
+	userSvc := userservice.NewUserService(userRepo)
 
 	app.authHandler = authhandler.NewAuthHandler(authSvc, app.logger)
 	app.userHandler = userhandler.NewUserHandler(userSvc, app.logger)
