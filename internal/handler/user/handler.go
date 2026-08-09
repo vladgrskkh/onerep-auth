@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
+	userdomain "github.com/vladgrskkh/onerep-auth/internal/domain/user"
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/user/dto"
 	userservice "github.com/vladgrskkh/onerep-auth/internal/service/user"
@@ -28,8 +29,12 @@ const (
 )
 
 type userProfileService interface {
-	GetProfile(ctx context.Context, userID uuid.UUID) (authdomain.User, error)
-	UpdateProfile(ctx context.Context, userID uuid.UUID, input userservice.UpdateProfileInput) (authdomain.User, error)
+	GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (userdomain.UserProfile, error)
+	UpdateProfile(
+		ctx context.Context,
+		userID uuid.UUID,
+		input userservice.UpdateProfileInput,
+	) (userdomain.UserProfile, error)
 }
 
 type UserHandler struct {
@@ -56,7 +61,7 @@ func (h *UserHandler) writeInvalidBody(w http.ResponseWriter) {
 // @Accept json
 // @Produce json
 // @Param id path string true "User ID"
-// @Success 200 {object} dto.UserProfile
+// @Success 200 {object} dto.UserProfileResponse
 // @Failure 400 {object} handler.ErrorResponse
 // @Failure 404 {object} handler.ErrorResponse
 // @Security BearerAuth
@@ -74,14 +79,14 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 	requesterID := handler.UserIDFromContext(r.Context())
 
-	u, err := h.svc.GetProfile(r.Context(), userID)
+	profile, err := h.svc.GetProfile(r.Context(), userID, requesterID)
 	if err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, status, detail)
 		return
 	}
 
-	handler.WriteJSON(w, http.StatusOK, toProfile(u, requesterID))
+	handler.WriteJSON(w, http.StatusOK, toProfileResponse(profile))
 }
 
 // UpdateProfile updates the authenticated user's profile.
@@ -93,7 +98,7 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path string true "User ID"
 // @Param request body dto.UpdateProfileRequest true "Profile data"
-// @Success 200 {object} dto.UserProfile
+// @Success 200 {object} dto.UserProfileResponse
 // @Failure 400 {object} handler.ErrorResponse
 // @Failure 403 {object} handler.ErrorResponse
 // @Security BearerAuth
@@ -131,12 +136,12 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		input.Gender = &g
 	}
 
-	u, err := h.svc.UpdateProfile(r.Context(), userID, input)
+	profile, err := h.svc.UpdateProfile(r.Context(), userID, input)
 	if err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, status, detail)
 		return
 	}
 
-	handler.WriteJSON(w, http.StatusOK, toProfile(u, requesterID))
+	handler.WriteJSON(w, http.StatusOK, toProfileResponse(profile))
 }

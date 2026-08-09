@@ -62,7 +62,7 @@ definitions:
       gender:
         type: string
     type: object
-  github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfile:
+  github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfileResponse:
     properties:
       avatar_url:
         type: string
@@ -226,7 +226,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfile'
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfileResponse'
         "400":
           description: Bad Request
           schema:
@@ -262,7 +262,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfile'
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfileResponse'
         "400":
           description: Bad Request
           schema:

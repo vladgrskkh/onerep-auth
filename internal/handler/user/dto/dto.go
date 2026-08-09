@@ -7,17 +7,17 @@ import (
 )
 
 type UpdateProfileRequest struct {
-	DisplayName *string `json:"display_name,omitempty"`
-	Gender      *string `json:"gender,omitempty"`
-	BirthDate   *string `json:"birth_date,omitempty"`
+	DisplayName *string `json:"display_name,omitzero"`
+	Gender      *string `json:"gender,omitzero"`
+	BirthDate   *string `json:"birth_date,omitzero"`
 }
 
-type UserProfile struct {
-	ID          uuid.UUID  `json:"id"`
-	DisplayName string     `json:"display_name"`
-	AvatarURL   *string    `json:"avatar_url"`
-	Gender      string     `json:"gender"`
-	Email       *string    `json:"email,omitempty"`
-	BirthDate   *time.Time `json:"birth_date,omitempty"`
-	CreatedAt   time.Time  `json:"created_at"`
+type UserProfileResponse struct {
+	ID          uuid.UUID `json:"id"`
+	DisplayName string    `json:"display_name"`
+	AvatarURL   string    `json:"avatar_url,omitzero"`
+	Gender      string    `json:"gender"`
+	Email       string    `json:"email,omitzero"`
+	BirthDate   time.Time `json:"birth_date,omitzero"`
+	CreatedAt   time.Time `json:"created_at"`
 }

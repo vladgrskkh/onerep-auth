@@ -1,25 +1,26 @@
 package user
 
 import (
-	"github.com/google/uuid"
-
-	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
+	userdomain "github.com/vladgrskkh/onerep-auth/internal/domain/user"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/user/dto"
 )
 
-// toProfile builds the profile response. Email and birth date are private and
-// only visible to the profile owner.
-func toProfile(u authdomain.User, requesterID uuid.UUID) dto.UserProfile {
-	profile := dto.UserProfile{
-		ID:          u.ID,
-		DisplayName: u.DisplayName,
-		AvatarURL:   u.AvatarURL,
-		Gender:      string(u.Gender),
-		CreatedAt:   u.CreatedAt,
+// toProfileResponse maps the domain read model to the HTTP response.
+func toProfileResponse(p userdomain.UserProfile) dto.UserProfileResponse {
+	resp := dto.UserProfileResponse{
+		ID:          p.ID,
+		DisplayName: p.DisplayName,
+		Gender:      string(p.Gender),
+		CreatedAt:   p.CreatedAt,
 	}
-	if u.ID == requesterID {
-		profile.Email = &u.Email
-		profile.BirthDate = u.BirthDate
+	if p.AvatarURL != nil {
+		resp.AvatarURL = *p.AvatarURL
 	}
-	return profile
+	if p.Email != nil {
+		resp.Email = *p.Email
+	}
+	if p.BirthDate != nil {
+		resp.BirthDate = *p.BirthDate
+	}
+	return resp
 }

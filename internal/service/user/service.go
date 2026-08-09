@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
+	userdomain "github.com/vladgrskkh/onerep-auth/internal/domain/user"
 )
 
 type UpdateProfileInput struct {
@@ -33,18 +34,22 @@ func NewUserService(finder UserProfileFinder, updater UserProfileUpdater) *UserS
 	return &UserService{finder: finder, updater: updater}
 }
 
-func (s *UserService) GetProfile(ctx context.Context, userID uuid.UUID) (authdomain.User, error) {
-	return s.finder.FindByID(ctx, userID)
+func (s *UserService) GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (userdomain.UserProfile, error) {
+	u, err := s.finder.FindByID(ctx, userID)
+	if err != nil {
+		return userdomain.UserProfile{}, err
+	}
+	return userdomain.ToProfile(u, requesterID), nil
 }
 
 func (s *UserService) UpdateProfile(
 	ctx context.Context,
 	userID uuid.UUID,
 	input UpdateProfileInput,
-) (authdomain.User, error) {
+) (userdomain.UserProfile, error) {
 	u, err := s.finder.FindByID(ctx, userID)
 	if err != nil {
-		return authdomain.User{}, err
+		return userdomain.UserProfile{}, err
 	}
 
 	if input.DisplayName != nil {
@@ -61,5 +66,10 @@ func (s *UserService) UpdateProfile(
 	}
 
 	u.UpdatedAt = time.Now()
-	return s.updater.Update(ctx, u)
+	updated, err := s.updater.Update(ctx, u)
+	if err != nil {
+		return userdomain.UserProfile{}, err
+	}
+
+	return userdomain.ToProfile(updated, userID), nil
 }

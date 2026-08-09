@@ -222,7 +222,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfile"
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfileResponse"
                         }
                     },
                     "400": {
@@ -278,7 +278,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfile"
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfileResponse"
                         }
                     },
                     "400": {
@@ -392,7 +392,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfile": {
+        "github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfileResponse": {
             "type": "object",
             "properties": {
                 "avatar_url": {
