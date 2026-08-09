@@ -2,7 +2,9 @@ package user
 
 import (
 	"context"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 
@@ -31,27 +33,39 @@ func (s *UserService) GetProfile(ctx context.Context, userID, requesterID uuid.U
 	return userdomain.ToProfile(u, requesterID), nil
 }
 
-// UpdateProfile applies the non-nil fields of the profile to the stored user.
-func (s *UserService) UpdateProfile(
-	ctx context.Context,
-	profile userdomain.UserProfile,
-) (userdomain.UserProfile, error) {
-	u, err := s.users.FindByID(ctx, profile.ID)
+const birthDateFormat = "2006-01-02"
+
+// UpdateProfile applies the non-nil fields of the command to the stored user.
+// Field values are validated here, not at the handler boundary.
+func (s *UserService) UpdateProfile(ctx context.Context, cmd UpdateProfileCommand) (userdomain.UserProfile, error) {
+	u, err := s.users.FindByID(ctx, cmd.UserID)
 	if err != nil {
 		return userdomain.UserProfile{}, err
 	}
 
-	if profile.DisplayName != nil {
-		u.DisplayName = *profile.DisplayName
+	if cmd.DisplayName != nil {
+		name := strings.TrimSpace(*cmd.DisplayName)
+		if name == "" || utf8.RuneCountInString(name) > authdomain.MaxDisplayNameLength {
+			return userdomain.UserProfile{}, authdomain.ErrInvalidDisplayName
+		}
+		u.DisplayName = name
 	}
-	if profile.Gender != nil {
-		u.Gender = *profile.Gender
+	if cmd.Gender != nil {
+		gender := authdomain.Gender(*cmd.Gender)
+		if !gender.IsValid() {
+			return userdomain.UserProfile{}, authdomain.ErrInvalidGender
+		}
+		u.Gender = gender
 	}
-	if profile.BirthDate != nil {
-		u.BirthDate = profile.BirthDate
+	if cmd.BirthDate != nil {
+		birthDate, parseErr := time.Parse(birthDateFormat, *cmd.BirthDate)
+		if parseErr != nil {
+			return userdomain.UserProfile{}, authdomain.ErrInvalidBirthDate
+		}
+		u.BirthDate = &birthDate
 	}
-	if profile.AvatarURL != nil {
-		u.AvatarURL = profile.AvatarURL
+	if cmd.AvatarURL != nil {
+		u.AvatarURL = cmd.AvatarURL
 	}
 
 	u.UpdatedAt = time.Now()
@@ -60,5 +74,5 @@ func (s *UserService) UpdateProfile(
 		return userdomain.UserProfile{}, err
 	}
 
-	return userdomain.ToProfile(updated, profile.ID), nil
+	return userdomain.ToProfile(updated, cmd.UserID), nil
 }

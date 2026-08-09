@@ -12,11 +12,12 @@ import (
 	userdomain "github.com/vladgrskkh/onerep-auth/internal/domain/user"
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/user/dto"
+	serviceuser "github.com/vladgrskkh/onerep-auth/internal/service/user"
 )
 
 type userProfileService interface {
 	GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (userdomain.UserProfile, error)
-	UpdateProfile(ctx context.Context, profile userdomain.UserProfile) (userdomain.UserProfile, error)
+	UpdateProfile(ctx context.Context, cmd serviceuser.UpdateProfileCommand) (userdomain.UserProfile, error)
 }
 
 type UserHandler struct {
@@ -97,13 +98,9 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profile, detail := toUpdateProfile(req, userID)
-	if detail.Code != "" {
-		handler.WriteError(w, h.logger, http.StatusBadRequest, detail)
-		return
-	}
+	cmd := toUpdateProfile(req, userID)
 
-	updated, err := h.svc.UpdateProfile(r.Context(), profile)
+	updated, err := h.svc.UpdateProfile(r.Context(), cmd)
 	if err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, h.logger, status, detail)

@@ -7,16 +7,17 @@ import (
 	"net/http"
 
 	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/jwt"
+	authsvc "github.com/vladgrskkh/onerep-auth/internal/service/auth"
 
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/auth/dto"
 )
 
 type authService interface {
-	Register(ctx context.Context, email, password, displayName string) (jwtsvc.TokenPair, error)
-	Login(ctx context.Context, email, password string) (jwtsvc.TokenPair, error)
-	Logout(ctx context.Context, refreshToken string) error
-	Refresh(ctx context.Context, refreshToken string) (jwtsvc.TokenPair, error)
+	Register(ctx context.Context, cmd authsvc.RegisterCommand) (jwtsvc.TokenPair, error)
+	Login(ctx context.Context, cmd authsvc.LoginCommand) (jwtsvc.TokenPair, error)
+	Logout(ctx context.Context, cmd authsvc.LogoutCommand) error
+	Refresh(ctx context.Context, cmd authsvc.RefreshCommand) (jwtsvc.TokenPair, error)
 }
 
 type AuthHandler struct {
@@ -51,7 +52,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pair, err := h.svc.Register(r.Context(), req.Email, req.Password, req.DisplayName)
+	pair, err := h.svc.Register(r.Context(), authsvc.RegisterCommand{
+		Email:       req.Email,
+		Password:    req.Password,
+		DisplayName: req.DisplayName,
+	})
 	if err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, h.logger, status, detail)
@@ -84,7 +89,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pair, err := h.svc.Login(r.Context(), req.Email, req.Password)
+	pair, err := h.svc.Login(r.Context(), authsvc.LoginCommand{
+		Email:    req.Email,
+		Password: req.Password,
+	})
 	if err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, h.logger, status, detail)
@@ -116,7 +124,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.svc.Logout(r.Context(), req.RefreshToken); err != nil {
+	if err := h.svc.Logout(r.Context(), authsvc.LogoutCommand{RefreshToken: req.RefreshToken}); err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, h.logger, status, detail)
 		return
@@ -148,7 +156,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pair, err := h.svc.Refresh(r.Context(), req.RefreshToken)
+	pair, err := h.svc.Refresh(r.Context(), authsvc.RefreshCommand{RefreshToken: req.RefreshToken})
 	if err != nil {
 		status, detail := mapError(err)
 		handler.WriteError(w, h.logger, status, detail)

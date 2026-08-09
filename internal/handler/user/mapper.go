@@ -1,14 +1,11 @@
 package user
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 
-	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 	userdomain "github.com/vladgrskkh/onerep-auth/internal/domain/user"
-	"github.com/vladgrskkh/onerep-auth/internal/handler"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/user/dto"
+	serviceuser "github.com/vladgrskkh/onerep-auth/internal/service/user"
 )
 
 // toProfileResponse maps the domain profile to the HTTP response.
@@ -31,22 +28,14 @@ func toProfileResponse(p userdomain.UserProfile) dto.UserProfileResponse {
 	return resp
 }
 
-// toUpdateProfile maps the HTTP request to the domain profile update command.
-func toUpdateProfile(req dto.UpdateProfileRequest, userID uuid.UUID) (userdomain.UserProfile, handler.ErrorDetail) {
-	profile := userdomain.UserProfile{
-		ID:          userID,
+// toUpdateProfile maps the HTTP request to the service update command. Raw
+// string values pass through; parsing and validation happen in the service.
+func toUpdateProfile(req dto.UpdateProfileRequest, userID uuid.UUID) serviceuser.UpdateProfileCommand {
+	return serviceuser.UpdateProfileCommand{
+		UserID:      userID,
 		DisplayName: req.DisplayName,
+		Gender:      req.Gender,
+		BirthDate:   req.BirthDate,
+		AvatarURL:   req.AvatarURL,
 	}
-	if req.Gender != nil {
-		g := authdomain.Gender(*req.Gender)
-		profile.Gender = &g
-	}
-	if req.BirthDate != nil {
-		t, err := time.Parse("2006-01-02", *req.BirthDate)
-		if err != nil {
-			return userdomain.UserProfile{}, errInvalidBirthDate()
-		}
-		profile.BirthDate = &t
-	}
-	return profile, handler.ErrorDetail{}
 }

@@ -55,11 +55,18 @@ definitions:
     type: object
   github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UpdateProfileRequest:
     properties:
+      avatar_url:
+        type: string
       birth_date:
         type: string
       display_name:
+        maxLength: 100
         type: string
       gender:
+        enum:
+        - male
+        - female
+        - other
         type: string
     type: object
   github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfileResponse:

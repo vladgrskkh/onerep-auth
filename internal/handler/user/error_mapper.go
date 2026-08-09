@@ -22,7 +22,6 @@ const (
 	errUserInvalidRequestBody = "The request body is invalid"
 
 	errCodeInvalidBirthDate = "INVALID_BIRTH_DATE"
-	errMsgInvalidBirthDate  = "invalid birth date"
 	errUserInvalidBirthDate = "Birth date must be in YYYY-MM-DD format"
 )
 
@@ -50,14 +49,6 @@ func invalidRequestBodyDetail() handler.ErrorDetail {
 	}
 }
 
-func errInvalidBirthDate() handler.ErrorDetail {
-	return handler.ErrorDetail{
-		Code:        errCodeInvalidBirthDate,
-		Message:     errMsgInvalidBirthDate,
-		UserMessage: errUserInvalidBirthDate,
-	}
-}
-
 func mapError(err error) (int, handler.ErrorDetail) {
 	switch {
 	case errors.Is(err, auth.ErrUserNotFound):
@@ -65,6 +56,24 @@ func mapError(err error) (int, handler.ErrorDetail) {
 			Code:        "USER_NOT_FOUND",
 			Message:     err.Error(),
 			UserMessage: "User not found",
+		}
+	case errors.Is(err, auth.ErrInvalidBirthDate):
+		return http.StatusBadRequest, handler.ErrorDetail{
+			Code:        errCodeInvalidBirthDate,
+			Message:     err.Error(),
+			UserMessage: errUserInvalidBirthDate,
+		}
+	case errors.Is(err, auth.ErrInvalidGender):
+		return http.StatusBadRequest, handler.ErrorDetail{
+			Code:        "INVALID_GENDER",
+			Message:     err.Error(),
+			UserMessage: "Please select a valid gender",
+		}
+	case errors.Is(err, auth.ErrInvalidDisplayName):
+		return http.StatusBadRequest, handler.ErrorDetail{
+			Code:        "INVALID_DISPLAY_NAME",
+			Message:     err.Error(),
+			UserMessage: "Display name must be between 1 and 100 characters",
 		}
 	default:
 		return http.StatusInternalServerError, handler.ErrorDetail{

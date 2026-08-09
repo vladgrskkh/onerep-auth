@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
+	"strings"
 	"testing"
 	"time"
 
@@ -50,7 +51,11 @@ func (s *ServiceTestSuite) TestRegister_Success() {
 	s.userRepo.EXPECT().Create(mock.Anything, mock.AnythingOfType("auth.User")).Return(authdomain.User{}, nil)
 	s.tokenStore.EXPECT().Save(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	pair, err := s.svc.Register(context.Background(), "test@example.com", "password123", "Test User")
+	pair, err := s.svc.Register(context.Background(), auth.RegisterCommand{
+		Email:       "test@example.com",
+		Password:    "password123",
+		DisplayName: "Test User",
+	})
 	s.Require().NoError(err)
 	s.NotEmpty(pair.AccessToken)
 	s.NotEmpty(pair.RefreshToken)
@@ -60,15 +65,49 @@ func (s *ServiceTestSuite) TestRegister_Success() {
 func (s *ServiceTestSuite) TestRegister_DuplicateEmail() {
 	s.userRepo.EXPECT().FindByEmail(mock.Anything, "dupe@example.com").Return(authdomain.User{}, nil)
 
-	_, err := s.svc.Register(context.Background(), "dupe@example.com", "password123", "Test User")
+	_, err := s.svc.Register(context.Background(), auth.RegisterCommand{
+		Email:       "dupe@example.com",
+		Password:    "password123",
+		DisplayName: "Test User",
+	})
 	s.ErrorIs(err, authdomain.ErrEmailAlreadyExists)
 }
 
 func (s *ServiceTestSuite) TestRegister_InvalidEmail() {
 	s.userRepo.EXPECT().FindByEmail(mock.Anything, "").Return(authdomain.User{}, authdomain.ErrUserNotFound)
 
-	_, err := s.svc.Register(context.Background(), "", "password123", "Test User")
+	_, err := s.svc.Register(context.Background(), auth.RegisterCommand{
+		Email:       "",
+		Password:    "password123",
+		DisplayName: "Test User",
+	})
 	s.ErrorIs(err, authdomain.ErrInvalidEmail)
+}
+
+func (s *ServiceTestSuite) TestRegister_EmptyPassword() {
+	s.userRepo.EXPECT().
+		FindByEmail(mock.Anything, "test@example.com").
+		Return(authdomain.User{}, authdomain.ErrUserNotFound)
+
+	_, err := s.svc.Register(context.Background(), auth.RegisterCommand{
+		Email:       "test@example.com",
+		Password:    "",
+		DisplayName: "Test User",
+	})
+	s.ErrorIs(err, authdomain.ErrInvalidPassword)
+}
+
+func (s *ServiceTestSuite) TestRegister_TooLongDisplayName() {
+	s.userRepo.EXPECT().
+		FindByEmail(mock.Anything, "test@example.com").
+		Return(authdomain.User{}, authdomain.ErrUserNotFound)
+
+	_, err := s.svc.Register(context.Background(), auth.RegisterCommand{
+		Email:       "test@example.com",
+		Password:    "password123",
+		DisplayName: strings.Repeat("a", authdomain.MaxDisplayNameLength+1),
+	})
+	s.ErrorIs(err, authdomain.ErrInvalidDisplayName)
 }
 
 func (s *ServiceTestSuite) TestLogin_Success() {
@@ -83,7 +122,10 @@ func (s *ServiceTestSuite) TestLogin_Success() {
 	}, nil)
 	s.tokenStore.EXPECT().Save(mock.Anything, mock.Anything, userID.String()).Return(nil)
 
-	pair, err := s.svc.Login(context.Background(), "login@example.com", "password123")
+	pair, err := s.svc.Login(context.Background(), auth.LoginCommand{
+		Email:    "login@example.com",
+		Password: "password123",
+	})
 	s.Require().NoError(err)
 	s.NotEmpty(pair.AccessToken)
 }
@@ -93,14 +135,17 @@ func (s *ServiceTestSuite) TestLogin_InvalidCredentials() {
 		FindByEmail(mock.Anything, "bad@example.com").
 		Return(authdomain.User{}, authdomain.ErrUserNotFound)
 
-	_, err := s.svc.Login(context.Background(), "bad@example.com", "wrong")
+	_, err := s.svc.Login(context.Background(), auth.LoginCommand{
+		Email:    "bad@example.com",
+		Password: "wrong",
+	})
 	s.ErrorIs(err, authdomain.ErrInvalidCredentials)
 }
 
 func (s *ServiceTestSuite) TestLogout_Success() {
 	s.tokenStore.EXPECT().Delete(mock.Anything, "some-refresh-token").Return(nil)
 
-	err := s.svc.Logout(context.Background(), "some-refresh-token")
+	err := s.svc.Logout(context.Background(), auth.LogoutCommand{RefreshToken: "some-refresh-token"})
 	s.NoError(err)
 }
 
@@ -114,7 +159,7 @@ func (s *ServiceTestSuite) TestRefresh_Success() {
 		Return(authdomain.User{ID: userID, Email: "refresh@example.com"}, nil)
 	s.tokenStore.EXPECT().Save(mock.Anything, mock.Anything, userID.String()).Return(nil)
 
-	pair, err := s.svc.Refresh(context.Background(), "valid-refresh")
+	pair, err := s.svc.Refresh(context.Background(), auth.RefreshCommand{RefreshToken: "valid-refresh"})
 	s.Require().NoError(err)
 	s.NotEmpty(pair.AccessToken)
 }
@@ -122,7 +167,7 @@ func (s *ServiceTestSuite) TestRefresh_Success() {
 func (s *ServiceTestSuite) TestRefresh_TokenNotFound() {
 	s.tokenStore.EXPECT().Get(mock.Anything, "expired-refresh").Return("", authdomain.ErrTokenNotFound)
 
-	_, err := s.svc.Refresh(context.Background(), "expired-refresh")
+	_, err := s.svc.Refresh(context.Background(), auth.RefreshCommand{RefreshToken: "expired-refresh"})
 	s.ErrorIs(err, authdomain.ErrTokenNotFound)
 }
 
