@@ -19,13 +19,19 @@ import (
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	app, err := application.New(application.WithLogger(logger))
+	ctx := context.Background()
+
+	app, err := application.New(
+		application.WithLogger(logger),
+		application.WithDatabase(ctx),
+		application.WithRedis(ctx),
+	)
 	if err != nil {
 		logger.Error("failed to create app", "error", err)
 		os.Exit(1)
 	}
 
-	if err := app.Run(context.Background()); err != nil {
+	if err := app.Run(ctx); err != nil {
 		logger.Error("server error", "error", err)
 		os.Exit(1)
 	}

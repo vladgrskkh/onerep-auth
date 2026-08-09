@@ -10,12 +10,6 @@ import (
 	"github.com/vladgrskkh/onerep-auth/internal/handler/auth/dto"
 )
 
-const (
-	errCodeInvalidRequestBody = "INVALID_REQUEST_BODY"
-	errMsgInvalidRequestBody  = "invalid request body"
-	errUserInvalidRequestBody = "The request body is invalid"
-)
-
 type authService interface {
 	Register(ctx context.Context, email, password, displayName string) (jwtsvc.TokenPair, error)
 	Login(ctx context.Context, email, password string) (jwtsvc.TokenPair, error)
@@ -32,11 +26,7 @@ func NewAuthHandler(svc authService) *AuthHandler {
 }
 
 func (h *AuthHandler) writeInvalidBody(w http.ResponseWriter) {
-	handler.WriteError(w, http.StatusBadRequest, handler.ErrorDetail{
-		Code:        errCodeInvalidRequestBody,
-		Message:     errMsgInvalidRequestBody,
-		UserMessage: errUserInvalidRequestBody,
-	})
+	handler.WriteError(w, http.StatusBadRequest, invalidRequestBodyDetail())
 }
 
 // Register handles user registration.

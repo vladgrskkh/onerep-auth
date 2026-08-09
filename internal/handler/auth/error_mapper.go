@@ -8,6 +8,20 @@ import (
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 )
 
+const (
+	errCodeInvalidRequestBody = "INVALID_REQUEST_BODY"
+	errMsgInvalidRequestBody  = "invalid request body"
+	errUserInvalidRequestBody = "The request body is invalid"
+)
+
+func invalidRequestBodyDetail() handler.ErrorDetail {
+	return handler.ErrorDetail{
+		Code:        errCodeInvalidRequestBody,
+		Message:     errMsgInvalidRequestBody,
+		UserMessage: errUserInvalidRequestBody,
+	}
+}
+
 func mapError(err error) (int, handler.ErrorDetail) {
 	switch {
 	case errors.Is(err, authdomain.ErrInvalidCredentials):

@@ -14,20 +14,6 @@ import (
 	userservice "github.com/vladgrskkh/onerep-auth/internal/service/user"
 )
 
-const (
-	errCodeInvalidUserID = "INVALID_USER_ID"
-	errMsgInvalidUserID  = "invalid user id"
-	errUserInvalidUserID = "The user ID is invalid"
-
-	errCodeForbidden = "FORBIDDEN"
-	errMsgForbidden  = "cannot update another user's profile"
-	errUserForbidden = "You can only update your own profile"
-
-	errCodeInvalidRequestBody = "INVALID_REQUEST_BODY"
-	errMsgInvalidRequestBody  = "invalid request body"
-	errUserInvalidRequestBody = "The request body is invalid"
-)
-
 type userProfileService interface {
 	GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (userdomain.UserProfile, error)
 	UpdateProfile(
@@ -46,11 +32,7 @@ func NewUserHandler(svc userProfileService) *UserHandler {
 }
 
 func (h *UserHandler) writeInvalidBody(w http.ResponseWriter) {
-	handler.WriteError(w, http.StatusBadRequest, handler.ErrorDetail{
-		Code:        errCodeInvalidRequestBody,
-		Message:     errMsgInvalidRequestBody,
-		UserMessage: errUserInvalidRequestBody,
-	})
+	handler.WriteError(w, http.StatusBadRequest, invalidRequestBodyDetail())
 }
 
 // GetProfile returns the user's profile.
@@ -69,11 +51,7 @@ func (h *UserHandler) writeInvalidBody(w http.ResponseWriter) {
 func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	userID, parseErr := uuid.Parse(chi.URLParam(r, "id"))
 	if parseErr != nil {
-		handler.WriteError(w, http.StatusBadRequest, handler.ErrorDetail{
-			Code:        errCodeInvalidUserID,
-			Message:     errMsgInvalidUserID,
-			UserMessage: errUserInvalidUserID,
-		})
+		handler.WriteError(w, http.StatusBadRequest, invalidUserIDDetail())
 		return
 	}
 
@@ -106,21 +84,13 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	userID, parseErr := uuid.Parse(chi.URLParam(r, "id"))
 	if parseErr != nil {
-		handler.WriteError(w, http.StatusBadRequest, handler.ErrorDetail{
-			Code:        errCodeInvalidUserID,
-			Message:     errMsgInvalidUserID,
-			UserMessage: errUserInvalidUserID,
-		})
+		handler.WriteError(w, http.StatusBadRequest, invalidUserIDDetail())
 		return
 	}
 
 	requesterID := handler.UserIDFromContext(r.Context())
 	if userID != requesterID {
-		handler.WriteError(w, http.StatusForbidden, handler.ErrorDetail{
-			Code:        errCodeForbidden,
-			Message:     errMsgForbidden,
-			UserMessage: errUserForbidden,
-		})
+		handler.WriteError(w, http.StatusForbidden, forbiddenDetail())
 		return
 	}
 
