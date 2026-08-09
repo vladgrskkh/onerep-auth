@@ -73,10 +73,8 @@ const (
 	MaxDisplayNameLength = 100
 )
 
-// NewUser builds a new user. Email format is validated at the request
-// boundary, not here; the domain only enforces a non-empty email (lowercased)
-// and a password of at least 8 runes. Display name is trimmed and capped at
-// MaxDisplayNameLength.
+// NewUser builds a new user with a lowercased non-empty email, a password of
+// at least 8 runes, and a trimmed display name capped at MaxDisplayNameLength.
 func NewUser(email, password, displayName string) (User, error) {
 	if strings.TrimSpace(email) == "" {
 		return User{}, ErrInvalidEmail

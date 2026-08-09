@@ -13,7 +13,8 @@ import (
 	"github.com/vladgrskkh/onerep-auth/internal/handler/auth/dto"
 )
 
-type authService interface {
+// AuthService is the auth use-case contract consumed by the handler.
+type AuthService interface {
 	Register(ctx context.Context, cmd authsvc.RegisterCommand) (jwtsvc.TokenPair, error)
 	Login(ctx context.Context, cmd authsvc.LoginCommand) (jwtsvc.TokenPair, error)
 	Logout(ctx context.Context, cmd authsvc.LogoutCommand) error
@@ -21,11 +22,11 @@ type authService interface {
 }
 
 type AuthHandler struct {
-	svc    authService
+	svc    AuthService
 	logger *slog.Logger
 }
 
-func NewAuthHandler(svc authService, logger *slog.Logger) *AuthHandler {
+func NewAuthHandler(svc AuthService, logger *slog.Logger) *AuthHandler {
 	return &AuthHandler{svc: svc, logger: logger}
 }
 
@@ -45,7 +46,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req dto.RegisterRequest
 	if err := handler.DecodeAndValidate(r, &req); err != nil {
 		if errors.Is(err, handler.ErrValidationFailed) {
-			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail())
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail(err))
 			return
 		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
@@ -82,7 +83,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginRequest
 	if err := handler.DecodeAndValidate(r, &req); err != nil {
 		if errors.Is(err, handler.ErrValidationFailed) {
-			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail())
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail(err))
 			return
 		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
@@ -117,7 +118,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	var req dto.LogoutRequest
 	if err := handler.DecodeAndValidate(r, &req); err != nil {
 		if errors.Is(err, handler.ErrValidationFailed) {
-			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail())
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail(err))
 			return
 		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())
@@ -149,7 +150,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var req dto.RefreshRequest
 	if err := handler.DecodeAndValidate(r, &req); err != nil {
 		if errors.Is(err, handler.ErrValidationFailed) {
-			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail())
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail(err))
 			return
 		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())

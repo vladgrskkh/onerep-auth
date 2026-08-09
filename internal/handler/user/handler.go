@@ -15,17 +15,19 @@ import (
 	serviceuser "github.com/vladgrskkh/onerep-auth/internal/service/user"
 )
 
-type userProfileService interface {
+// UserProfileService is the user profile use-case contract consumed by the
+// handler.
+type UserProfileService interface {
 	GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (userdomain.UserProfile, error)
 	UpdateProfile(ctx context.Context, cmd serviceuser.UpdateProfileCommand) (userdomain.UserProfile, error)
 }
 
 type UserHandler struct {
-	svc    userProfileService
+	svc    UserProfileService
 	logger *slog.Logger
 }
 
-func NewUserHandler(svc userProfileService, logger *slog.Logger) *UserHandler {
+func NewUserHandler(svc UserProfileService, logger *slog.Logger) *UserHandler {
 	return &UserHandler{svc: svc, logger: logger}
 }
 
@@ -91,7 +93,7 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	var req dto.UpdateProfileRequest
 	if err := handler.DecodeAndValidate(r, &req); err != nil {
 		if errors.Is(err, handler.ErrValidationFailed) {
-			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail())
+			handler.WriteError(w, h.logger, http.StatusBadRequest, handler.ValidationErrorDetail(err))
 			return
 		}
 		handler.WriteError(w, h.logger, http.StatusBadRequest, invalidRequestBodyDetail())

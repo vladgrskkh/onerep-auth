@@ -304,6 +304,12 @@ const docTemplate = `{
                 "code": {
                     "type": "string"
                 },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ValidationDetail"
+                    }
+                },
                 "message": {
                     "type": "string"
                 },
@@ -317,6 +323,20 @@ const docTemplate = `{
             "properties": {
                 "error": {
                     "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorDetail"
+                }
+            }
+        },
+        "github_com_vladgrskkh_onerep-auth_internal_handler.ValidationDetail": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string"
+                },
+                "param": {
+                    "type": "string"
+                },
+                "tag": {
+                    "type": "string"
                 }
             }
         },

@@ -32,7 +32,7 @@ func (s *DomainTestSuite) TestNewUser_WhitespaceEmail() {
 	s.ErrorIs(err, auth.ErrInvalidEmail)
 }
 
-// Email format is not a domain concern: the request validator enforces it.
+// NewUser accepts emails without an @ symbol.
 func (s *DomainTestSuite) TestNewUser_NoEmailFormatCheck() {
 	_, err := auth.NewUser("notanemail", "password123", "Test User")
 	s.NoError(err)

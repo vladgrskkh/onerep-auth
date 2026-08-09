@@ -1,7 +1,6 @@
 package auth_test
 
 import (
-	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -9,49 +8,27 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/auth"
+	authmocks "github.com/vladgrskkh/onerep-auth/internal/handler/auth/mocks"
 	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/jwt"
 	authsvc "github.com/vladgrskkh/onerep-auth/internal/service/auth"
 )
-
-type fakeAuthService struct {
-	registered bool
-	lastCmd    authsvc.RegisterCommand
-	pair       jwtsvc.TokenPair
-}
-
-func (f *fakeAuthService) Register(_ context.Context, cmd authsvc.RegisterCommand) (jwtsvc.TokenPair, error) {
-	f.registered = true
-	f.lastCmd = cmd
-	return f.pair, nil
-}
-
-func (f *fakeAuthService) Login(_ context.Context, _ authsvc.LoginCommand) (jwtsvc.TokenPair, error) {
-	return f.pair, nil
-}
-
-func (f *fakeAuthService) Logout(_ context.Context, _ authsvc.LogoutCommand) error {
-	return nil
-}
-
-func (f *fakeAuthService) Refresh(_ context.Context, _ authsvc.RefreshCommand) (jwtsvc.TokenPair, error) {
-	return f.pair, nil
-}
 
 type HandlerTestSuite struct {
 	suite.Suite
 
 	handler *auth.AuthHandler
-	fake    *fakeAuthService
+	svc     *authmocks.MockAuthService
 }
 
 func (s *HandlerTestSuite) SetupTest() {
-	s.fake = &fakeAuthService{}
+	s.svc = authmocks.NewMockAuthService(s.T())
 	logger := slog.New(slog.DiscardHandler)
-	s.handler = auth.NewAuthHandler(s.fake, logger)
+	s.handler = auth.NewAuthHandler(s.svc, logger)
 }
 
 func (s *HandlerTestSuite) post(body string) *httptest.ResponseRecorder {
@@ -61,44 +38,61 @@ func (s *HandlerTestSuite) post(body string) *httptest.ResponseRecorder {
 	return w
 }
 
-func (s *HandlerTestSuite) errorCode(w *httptest.ResponseRecorder) string {
+func (s *HandlerTestSuite) decodeError(w *httptest.ResponseRecorder) handler.ErrorResponse {
 	var resp handler.ErrorResponse
 	s.Require().NoError(json.Unmarshal(w.Body.Bytes(), &resp))
-	return string(resp.Error.Code)
+	return resp
 }
 
 func (s *HandlerTestSuite) TestRegister_InvalidEmail() {
 	w := s.post(`{"email":"notanemail","password":"password123","display_name":"Alice"}`)
 
 	s.Equal(http.StatusBadRequest, w.Code)
-	s.Equal("VALIDATION_ERROR", s.errorCode(w))
-	s.False(s.fake.registered)
+	resp := s.decodeError(w)
+	s.Equal("VALIDATION_ERROR", string(resp.Error.Code))
+	s.Equal("Please check your input", resp.Error.UserMessage)
+	s.Require().Len(resp.Error.Details, 1)
+	s.Equal("email", resp.Error.Details[0].Field)
+	s.Equal("email", resp.Error.Details[0].Tag)
+	s.svc.AssertNotCalled(s.T(), "Register", mock.Anything, mock.Anything)
 }
 
 func (s *HandlerTestSuite) TestRegister_MissingPassword() {
 	w := s.post(`{"email":"a@b.com"}`)
 
 	s.Equal(http.StatusBadRequest, w.Code)
-	s.Equal("VALIDATION_ERROR", s.errorCode(w))
-	s.False(s.fake.registered)
+	resp := s.decodeError(w)
+	s.Equal("VALIDATION_ERROR", string(resp.Error.Code))
+	s.Require().Len(resp.Error.Details, 2)
+	s.Equal("password", resp.Error.Details[0].Field)
+	s.Equal("required", resp.Error.Details[0].Tag)
+	s.Equal("display_name", resp.Error.Details[1].Field)
+	s.Equal("required", resp.Error.Details[1].Tag)
+	s.svc.AssertNotCalled(s.T(), "Register", mock.Anything, mock.Anything)
 }
 
 func (s *HandlerTestSuite) TestRegister_InvalidJSON() {
 	w := s.post(`{not json`)
 
 	s.Equal(http.StatusBadRequest, w.Code)
-	s.Equal("INVALID_REQUEST_BODY", s.errorCode(w))
-	s.False(s.fake.registered)
+	s.Equal("INVALID_REQUEST_BODY", string(s.decodeError(w).Error.Code))
+	s.svc.AssertNotCalled(s.T(), "Register", mock.Anything, mock.Anything)
 }
 
 func (s *HandlerTestSuite) TestRegister_Success() {
-	s.fake.pair = jwtsvc.TokenPair{AccessToken: "access", RefreshToken: "refresh", ExpiresIn: 900}
+	cmd := authsvc.RegisterCommand{
+		Email:       "a@b.com",
+		Password:    "password123",
+		DisplayName: "Alice",
+	}
+	s.svc.EXPECT().
+		Register(mock.Anything, cmd).
+		Return(jwtsvc.TokenPair{AccessToken: "access", RefreshToken: "refresh", ExpiresIn: 900}, nil)
+
 	w := s.post(`{"email":"a@b.com","password":"password123","display_name":"Alice"}`)
 
 	s.Equal(http.StatusCreated, w.Code)
-	s.True(s.fake.registered)
-	s.Equal("a@b.com", s.fake.lastCmd.Email)
-	s.Equal("Alice", s.fake.lastCmd.DisplayName)
+	s.svc.AssertCalled(s.T(), "Register", mock.Anything, cmd)
 }
 
 func TestHandlerSuite(t *testing.T) {

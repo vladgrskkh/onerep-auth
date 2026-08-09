@@ -1,11 +1,36 @@
 with-expecter: true
-dir: internal/service/auth/mocks
-mockname: "Mock{{.InterfaceName}}"
-outpkg: "mocks"
-filename: "{{.InterfaceName | snakecase}}.gen.go"
 packages:
   github.com/vladgrskkh/onerep-auth/internal/service/auth:
+    config:
+      dir: internal/service/auth/mocks
+      mockname: "Mock{{.InterfaceName}}"
+      outpkg: "mocks"
+      filename: "{{.InterfaceName | snakecase}}.gen.go"
     interfaces:
       UserRepository:
       TokenStorer:
       OAuthAccountRepository:
+  github.com/vladgrskkh/onerep-auth/internal/service/user:
+    config:
+      dir: internal/service/user/mocks
+      mockname: "Mock{{.InterfaceName}}"
+      outpkg: "mocks"
+      filename: "{{.InterfaceName | snakecase}}.gen.go"
+    interfaces:
+      UserProfileRepository:
+  github.com/vladgrskkh/onerep-auth/internal/handler/auth:
+    config:
+      dir: internal/handler/auth/mocks
+      mockname: "Mock{{.InterfaceName}}"
+      outpkg: "mocks"
+      filename: "{{.InterfaceName | snakecase}}.gen.go"
+    interfaces:
+      AuthService:
+  github.com/vladgrskkh/onerep-auth/internal/handler/user:
+    config:
+      dir: internal/handler/user/mocks
+      mockname: "Mock{{.InterfaceName}}"
+      outpkg: "mocks"
+      filename: "{{.InterfaceName | snakecase}}.gen.go"
+    interfaces:
+      UserProfileService:

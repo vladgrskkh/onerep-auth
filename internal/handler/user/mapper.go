@@ -28,8 +28,7 @@ func toProfileResponse(p userdomain.UserProfile) dto.UserProfileResponse {
 	return resp
 }
 
-// toUpdateProfile maps the HTTP request to the service update command. Raw
-// string values pass through; parsing and validation happen in the service.
+// toUpdateProfile maps the HTTP request to the service update command.
 func toUpdateProfile(req dto.UpdateProfileRequest, userID uuid.UUID) serviceuser.UpdateProfileCommand {
 	return serviceuser.UpdateProfileCommand{
 		UserID:      userID,

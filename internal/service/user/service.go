@@ -35,8 +35,8 @@ func (s *UserService) GetProfile(ctx context.Context, userID, requesterID uuid.U
 
 const birthDateFormat = "2006-01-02"
 
-// UpdateProfile applies the non-nil fields of the command to the stored user.
-// Field values are validated here, not at the handler boundary.
+// UpdateProfile applies the non-nil fields of the command to the stored user,
+// parsing and validating each provided value before applying it.
 func (s *UserService) UpdateProfile(ctx context.Context, cmd UpdateProfileCommand) (userdomain.UserProfile, error) {
 	u, err := s.users.FindByID(ctx, cmd.UserID)
 	if err != nil {
