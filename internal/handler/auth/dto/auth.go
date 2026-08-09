@@ -18,9 +18,3 @@ type RefreshRequest struct {
 type LogoutRequest struct {
 	RefreshToken string `json:"refresh_token" validate:"required"`
 }
-
-type UpdateProfileRequest struct {
-	DisplayName *string `json:"display_name,omitempty"`
-	Gender      *string `json:"gender,omitempty"       validate:"omitempty,oneof=male female other"`
-	BirthDate   *string `json:"birth_date,omitempty"`
-}

@@ -16,10 +16,10 @@ jobs:
         with:
           go-version: '1.26'
           cache: true
+      - name: Install tools
+        run: make tools
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.12.2
+        run: make lint
 
   check_generate:
     runs-on: ubuntu-latest
@@ -30,20 +30,9 @@ jobs:
           go-version: '1.26'
           cache: true
       - name: Install tools
-        run: |
-          go install github.com/vektra/mockery/v2@latest
-          go install github.com/swaggo/swag/v2/cmd/swag@latest
-      - name: Regenerate mocks
-        run: mockery
-      - name: Regenerate swagger docs
-        run: swag init --parseDependency -g cmd/server/main.go -o docs/
-      - name: Verify no diff
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "Generated files are out of date. Run 'make mock' and 'make swagger' and commit the changes."
-            git diff
-            exit 1
-          fi
+        run: make tools
+      - name: Verify generated files are up to date
+        run: make check-generate
 
   test:
     runs-on: ubuntu-latest
@@ -80,7 +69,7 @@ jobs:
           cache: true
       - name: Run migrations
         run: |
-          go install github.com/pressly/goose/v3/cmd/goose@latest
+          go install github.com/pressly/goose/v3/cmd/goose@v3.27.3
           goose -dir migrations postgres "$DATABASE_URL" up
       - name: Run tests
         run: go test ./... -v -count=1 -race

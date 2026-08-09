@@ -36,7 +36,6 @@ func (h *AuthHandler) writeInvalidBody(w http.ResponseWriter) {
 		Code:        errCodeInvalidRequestBody,
 		Message:     errMsgInvalidRequestBody,
 		UserMessage: errUserInvalidRequestBody,
-		Type:        handler.ErrorTypeUser,
 	})
 }
 

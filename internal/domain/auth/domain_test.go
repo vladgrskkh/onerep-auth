@@ -3,7 +3,6 @@ package auth_test
 import (
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
@@ -35,19 +34,6 @@ func (s *DomainTestSuite) TestNewUser_ShortPassword() {
 func (s *DomainTestSuite) TestNewUser_EmptyName() {
 	_, err := auth.NewUser("test@example.com", "password123", "")
 	s.Error(err)
-}
-
-func (s *DomainTestSuite) TestUser_ToProfile_Self() {
-	u, _ := auth.NewUser("a@b.com", "password123", "Alice")
-	profile := u.ToProfile(u.ID)
-	s.Equal("a@b.com", *profile.Email)
-}
-
-func (s *DomainTestSuite) TestUser_ToProfile_Other() {
-	u, _ := auth.NewUser("a@b.com", "password123", "Alice")
-	otherID := uuid.New()
-	profile := u.ToProfile(otherID)
-	s.Nil(profile.Email)
 }
 
 func TestDomainSuite(t *testing.T) {

@@ -127,28 +127,3 @@ func NewOAuthAccount(userID uuid.UUID, provider OAuthProvider, providerUserID st
 		CreatedAt:      time.Now(),
 	}
 }
-
-type UserProfile struct {
-	ID          uuid.UUID  `json:"id"`
-	DisplayName string     `json:"display_name"`
-	AvatarURL   *string    `json:"avatar_url"`
-	Gender      Gender     `json:"gender"`
-	Email       *string    `json:"email,omitempty"`
-	BirthDate   *time.Time `json:"birth_date,omitempty"`
-	CreatedAt   time.Time  `json:"created_at"`
-}
-
-func (u *User) ToProfile(requesterID uuid.UUID) UserProfile {
-	profile := UserProfile{
-		ID:          u.ID,
-		DisplayName: u.DisplayName,
-		AvatarURL:   u.AvatarURL,
-		Gender:      u.Gender,
-		CreatedAt:   u.CreatedAt,
-	}
-	if u.ID == requesterID {
-		profile.Email = &u.Email
-		profile.BirthDate = u.BirthDate
-	}
-	return profile
-}

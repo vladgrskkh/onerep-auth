@@ -222,7 +222,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_domain_auth.UserProfile"
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfile"
                         }
                     },
                     "400": {
@@ -278,7 +278,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_domain_auth.UserProfile"
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfile"
                         }
                     },
                     "400": {
@@ -311,32 +311,6 @@ const docTemplate = `{
                 "GenderOther"
             ]
         },
-        "github_com_vladgrskkh_onerep-auth_internal_domain_auth.UserProfile": {
-            "type": "object",
-            "properties": {
-                "avatar_url": {
-                    "type": "string"
-                },
-                "birth_date": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "display_name": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "gender": {
-                    "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_domain_auth.Gender"
-                },
-                "id": {
-                    "type": "string"
-                }
-            }
-        },
         "github_com_vladgrskkh_onerep-auth_internal_handler.ErrorDetail": {
             "type": "object",
             "properties": {
@@ -345,9 +319,6 @@ const docTemplate = `{
                 },
                 "message": {
                     "type": "string"
-                },
-                "type": {
-                    "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorType"
                 },
                 "user_message": {
                     "type": "string"
@@ -361,17 +332,6 @@ const docTemplate = `{
                     "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorDetail"
                 }
             }
-        },
-        "github_com_vladgrskkh_onerep-auth_internal_handler.ErrorType": {
-            "type": "string",
-            "enum": [
-                "user_error",
-                "system_error"
-            ],
-            "x-enum-varnames": [
-                "ErrorTypeUser",
-                "ErrorTypeSystem"
-            ]
         },
         "github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.LoginRequest": {
             "type": "object",
@@ -441,6 +401,32 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "gender": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfile": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "birth_date": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "gender": {
+                    "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_domain_auth.Gender"
+                },
+                "id": {
                     "type": "string"
                 }
             }

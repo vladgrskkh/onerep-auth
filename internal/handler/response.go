@@ -5,20 +5,12 @@ import (
 	"net/http"
 )
 
-type ErrorType string
-
-const (
-	ErrorTypeUser   ErrorType = "user_error"
-	ErrorTypeSystem ErrorType = "system_error"
-)
-
 type ErrorCode string
 
 type ErrorDetail struct {
 	Code        ErrorCode `json:"code"`
 	Message     string    `json:"message"`
 	UserMessage string    `json:"user_message,omitempty"`
-	Type        ErrorType `json:"type"`
 }
 
 type ErrorResponse struct {
@@ -37,10 +29,9 @@ func WriteError(w http.ResponseWriter, status int, detail ErrorDetail) {
 	WriteJSON(w, status, ErrorResponse{Error: detail})
 }
 
-func WriteSystemError(w http.ResponseWriter, status int, code ErrorCode) {
+func WriteSystemError(w http.ResponseWriter, status int, err error) {
 	WriteError(w, status, ErrorDetail{
-		Code:    code,
-		Message: "internal server error",
-		Type:    ErrorTypeSystem,
+		Code:    "INTERNAL_ERROR",
+		Message: err.Error(),
 	})
 }

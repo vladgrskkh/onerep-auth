@@ -10,31 +10,12 @@ definitions:
     - GenderMale
     - GenderFemale
     - GenderOther
-  github_com_vladgrskkh_onerep-auth_internal_domain_auth.UserProfile:
-    properties:
-      avatar_url:
-        type: string
-      birth_date:
-        type: string
-      created_at:
-        type: string
-      display_name:
-        type: string
-      email:
-        type: string
-      gender:
-        $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_domain_auth.Gender'
-      id:
-        type: string
-    type: object
   github_com_vladgrskkh_onerep-auth_internal_handler.ErrorDetail:
     properties:
       code:
         type: string
       message:
         type: string
-      type:
-        $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorType'
       user_message:
         type: string
     type: object
@@ -43,14 +24,6 @@ definitions:
       error:
         $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorDetail'
     type: object
-  github_com_vladgrskkh_onerep-auth_internal_handler.ErrorType:
-    enum:
-    - user_error
-    - system_error
-    type: string
-    x-enum-varnames:
-    - ErrorTypeUser
-    - ErrorTypeSystem
   github_com_vladgrskkh_onerep-auth_internal_handler_auth_dto.LoginRequest:
     properties:
       email:
@@ -97,6 +70,23 @@ definitions:
       display_name:
         type: string
       gender:
+        type: string
+    type: object
+  github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfile:
+    properties:
+      avatar_url:
+        type: string
+      birth_date:
+        type: string
+      created_at:
+        type: string
+      display_name:
+        type: string
+      email:
+        type: string
+      gender:
+        $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_domain_auth.Gender'
+      id:
         type: string
     type: object
   github_com_vladgrskkh_onerep-auth_internal_infrastructure_auth_jwt.TokenPair:
@@ -246,7 +236,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_domain_auth.UserProfile'
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfile'
         "400":
           description: Bad Request
           schema:
@@ -282,7 +272,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_domain_auth.UserProfile'
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler_user_dto.UserProfile'
         "400":
           description: Bad Request
           schema:
