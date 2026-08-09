@@ -298,19 +298,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_vladgrskkh_onerep-auth_internal_domain_auth.Gender": {
-            "type": "string",
-            "enum": [
-                "male",
-                "female",
-                "other"
-            ],
-            "x-enum-varnames": [
-                "GenderMale",
-                "GenderFemale",
-                "GenderOther"
-            ]
-        },
         "github_com_vladgrskkh_onerep-auth_internal_handler.ErrorDetail": {
             "type": "object",
             "properties": {
@@ -424,7 +411,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "gender": {
-                    "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_domain_auth.Gender"
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"

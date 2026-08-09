@@ -4,8 +4,8 @@ import (
 	"errors"
 	"strings"
 	"time"
+	"unicode/utf8"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
 
@@ -18,14 +18,6 @@ var (
 	ErrOAuthAccountExists = errors.New("oauth account already linked")
 	ErrTokenNotFound      = errors.New("refresh token not found or expired")
 )
-
-type ValidationError struct {
-	Msg string
-}
-
-func (e *ValidationError) Error() string {
-	return e.Msg
-}
 
 type Gender string
 
@@ -63,35 +55,19 @@ type OAuthAccount struct {
 	CreatedAt      time.Time
 }
 
-type RegisterInput struct {
-	Email       string `validate:"required,email"`
-	Password    string `validate:"required,min=8"`
-	DisplayName string `validate:"required,min=1"`
-}
-
-func (i RegisterInput) Validate() error {
-	validate := validator.New()
-	return validate.Struct(i)
-}
+const minPasswordLength = 8
 
 func NewUser(email, password, displayName string) (User, error) {
-	input := RegisterInput{Email: email, Password: password, DisplayName: displayName}
-	if err := input.Validate(); err != nil {
-		var validationErr validator.ValidationErrors
-		if errors.As(err, &validationErr) {
-			for _, e := range validationErr {
-				switch e.Field() {
-				case "Email":
-					return User{}, ErrInvalidEmail
-				case "Password":
-					return User{}, ErrInvalidPassword
-				case "DisplayName":
-					return User{}, ErrInvalidCredentials
-				}
-			}
-		}
+	if !strings.Contains(email, "@") {
 		return User{}, ErrInvalidEmail
 	}
+	if utf8.RuneCountInString(password) < minPasswordLength {
+		return User{}, ErrInvalidPassword
+	}
+	if strings.TrimSpace(displayName) == "" {
+		return User{}, ErrInvalidCredentials
+	}
+
 	now := time.Now()
 	return User{
 		ID:          uuid.Must(uuid.NewV7()),

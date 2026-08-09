@@ -4,8 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
-	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 )
 
 type UpdateProfileRequest struct {
@@ -15,11 +13,11 @@ type UpdateProfileRequest struct {
 }
 
 type UserProfile struct {
-	ID          uuid.UUID         `json:"id"`
-	DisplayName string            `json:"display_name"`
-	AvatarURL   *string           `json:"avatar_url"`
-	Gender      authdomain.Gender `json:"gender"`
-	Email       *string           `json:"email,omitempty"`
-	BirthDate   *time.Time        `json:"birth_date,omitempty"`
-	CreatedAt   time.Time         `json:"created_at"`
+	ID          uuid.UUID  `json:"id"`
+	DisplayName string     `json:"display_name"`
+	AvatarURL   *string    `json:"avatar_url"`
+	Gender      string     `json:"gender"`
+	Email       *string    `json:"email,omitempty"`
+	BirthDate   *time.Time `json:"birth_date,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
 }

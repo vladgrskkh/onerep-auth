@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -104,6 +106,9 @@ func (app *Application) connectDependencies(ctx context.Context) error {
 }
 
 func (app *Application) Run(ctx context.Context) error {
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+	defer stop()
+
 	if err := app.connectDependencies(ctx); err != nil {
 		return err
 	}

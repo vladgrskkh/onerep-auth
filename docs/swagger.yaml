@@ -1,15 +1,5 @@
 basePath: /v1
 definitions:
-  github_com_vladgrskkh_onerep-auth_internal_domain_auth.Gender:
-    enum:
-    - male
-    - female
-    - other
-    type: string
-    x-enum-varnames:
-    - GenderMale
-    - GenderFemale
-    - GenderOther
   github_com_vladgrskkh_onerep-auth_internal_handler.ErrorDetail:
     properties:
       code:
@@ -85,7 +75,7 @@ definitions:
       email:
         type: string
       gender:
-        $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_domain_auth.Gender'
+        type: string
       id:
         type: string
     type: object

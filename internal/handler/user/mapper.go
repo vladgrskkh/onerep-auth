@@ -14,7 +14,7 @@ func toProfile(u authdomain.User, requesterID uuid.UUID) dto.UserProfile {
 		ID:          u.ID,
 		DisplayName: u.DisplayName,
 		AvatarURL:   u.AvatarURL,
-		Gender:      u.Gender,
+		Gender:      string(u.Gender),
 		CreatedAt:   u.CreatedAt,
 	}
 	if u.ID == requesterID {
