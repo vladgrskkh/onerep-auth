@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 	jwtsvc "github.com/vladgrskkh/onerep-auth/internal/infrastructure/auth/jwt"
 	authsvc "github.com/vladgrskkh/onerep-auth/internal/service/auth"
 
@@ -41,6 +42,7 @@ func NewAuthHandler(svc AuthService, logger *slog.Logger) *AuthHandler {
 // @Success 201 {object} jwtsvc.TokenPair
 // @Failure 400 {object} handler.ErrorResponse
 // @Failure 409 {object} handler.ErrorResponse
+// @Failure 500 {object} handler.ErrorResponse
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req dto.RegisterRequest
@@ -59,8 +61,18 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		DisplayName: req.DisplayName,
 	})
 	if err != nil {
-		status, detail := mapError(err)
-		handler.WriteError(w, h.logger, status, detail)
+		switch {
+		case errors.Is(err, authdomain.ErrEmailAlreadyExists):
+			handler.WriteError(w, h.logger, http.StatusConflict, emailAlreadyExistsDetail())
+		case errors.Is(err, authdomain.ErrInvalidEmail):
+			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidEmailDetail())
+		case errors.Is(err, authdomain.ErrInvalidPassword):
+			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidPasswordDetail())
+		case errors.Is(err, authdomain.ErrInvalidDisplayName):
+			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidDisplayNameDetail())
+		default:
+			handler.WriteSystemError(w, h.logger, http.StatusInternalServerError, err)
+		}
 		return
 	}
 
@@ -78,6 +90,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} jwtsvc.TokenPair
 // @Failure 400 {object} handler.ErrorResponse
 // @Failure 401 {object} handler.ErrorResponse
+// @Failure 500 {object} handler.ErrorResponse
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginRequest
@@ -95,8 +108,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Password: req.Password,
 	})
 	if err != nil {
-		status, detail := mapError(err)
-		handler.WriteError(w, h.logger, status, detail)
+		switch {
+		case errors.Is(err, authdomain.ErrInvalidCredentials):
+			handler.WriteError(w, h.logger, http.StatusUnauthorized, invalidCredentialsDetail())
+		default:
+			handler.WriteSystemError(w, h.logger, http.StatusInternalServerError, err)
+		}
 		return
 	}
 
@@ -113,6 +130,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Param request body dto.LogoutRequest true "Logout data"
 // @Success 204
 // @Failure 400 {object} handler.ErrorResponse
+// @Failure 500 {object} handler.ErrorResponse
 // @Router /auth/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	var req dto.LogoutRequest
@@ -126,8 +144,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.svc.Logout(r.Context(), authsvc.LogoutCommand{RefreshToken: req.RefreshToken}); err != nil {
-		status, detail := mapError(err)
-		handler.WriteError(w, h.logger, status, detail)
+		handler.WriteSystemError(w, h.logger, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -145,6 +162,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} jwtsvc.TokenPair
 // @Failure 400 {object} handler.ErrorResponse
 // @Failure 401 {object} handler.ErrorResponse
+// @Failure 500 {object} handler.ErrorResponse
 // @Router /auth/refresh [post]
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var req dto.RefreshRequest
@@ -159,8 +177,12 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	pair, err := h.svc.Refresh(r.Context(), authsvc.RefreshCommand{RefreshToken: req.RefreshToken})
 	if err != nil {
-		status, detail := mapError(err)
-		handler.WriteError(w, h.logger, status, detail)
+		switch {
+		case errors.Is(err, authdomain.ErrTokenNotFound):
+			handler.WriteError(w, h.logger, http.StatusUnauthorized, tokenNotFoundDetail())
+		default:
+			handler.WriteSystemError(w, h.logger, http.StatusInternalServerError, err)
+		}
 		return
 	}
 
