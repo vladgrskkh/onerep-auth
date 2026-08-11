@@ -28,22 +28,24 @@ func (_m *MockUserProfileService) EXPECT() *MockUserProfileService_Expecter {
 }
 
 // GetProfile provides a mock function with given fields: ctx, userID, requesterID
-func (_m *MockUserProfileService) GetProfile(ctx context.Context, userID uuid.UUID, requesterID uuid.UUID) (user.UserProfile, error) {
+func (_m *MockUserProfileService) GetProfile(ctx context.Context, userID uuid.UUID, requesterID uuid.UUID) (*user.UserProfile, error) {
 	ret := _m.Called(ctx, userID, requesterID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProfile")
 	}
 
-	var r0 user.UserProfile
+	var r0 *user.UserProfile
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) (user.UserProfile, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) (*user.UserProfile, error)); ok {
 		return rf(ctx, userID, requesterID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) user.UserProfile); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) *user.UserProfile); ok {
 		r0 = rf(ctx, userID, requesterID)
 	} else {
-		r0 = ret.Get(0).(user.UserProfile)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*user.UserProfile)
+		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
@@ -75,33 +77,35 @@ func (_c *MockUserProfileService_GetProfile_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockUserProfileService_GetProfile_Call) Return(_a0 user.UserProfile, _a1 error) *MockUserProfileService_GetProfile_Call {
+func (_c *MockUserProfileService_GetProfile_Call) Return(_a0 *user.UserProfile, _a1 error) *MockUserProfileService_GetProfile_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockUserProfileService_GetProfile_Call) RunAndReturn(run func(context.Context, uuid.UUID, uuid.UUID) (user.UserProfile, error)) *MockUserProfileService_GetProfile_Call {
+func (_c *MockUserProfileService_GetProfile_Call) RunAndReturn(run func(context.Context, uuid.UUID, uuid.UUID) (*user.UserProfile, error)) *MockUserProfileService_GetProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateProfile provides a mock function with given fields: ctx, cmd
-func (_m *MockUserProfileService) UpdateProfile(ctx context.Context, cmd serviceuser.UpdateProfileCommand) (user.UserProfile, error) {
+func (_m *MockUserProfileService) UpdateProfile(ctx context.Context, cmd serviceuser.UpdateProfileCommand) (*user.UserProfile, error) {
 	ret := _m.Called(ctx, cmd)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateProfile")
 	}
 
-	var r0 user.UserProfile
+	var r0 *user.UserProfile
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, serviceuser.UpdateProfileCommand) (user.UserProfile, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, serviceuser.UpdateProfileCommand) (*user.UserProfile, error)); ok {
 		return rf(ctx, cmd)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, serviceuser.UpdateProfileCommand) user.UserProfile); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, serviceuser.UpdateProfileCommand) *user.UserProfile); ok {
 		r0 = rf(ctx, cmd)
 	} else {
-		r0 = ret.Get(0).(user.UserProfile)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*user.UserProfile)
+		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, serviceuser.UpdateProfileCommand) error); ok {
@@ -132,12 +136,12 @@ func (_c *MockUserProfileService_UpdateProfile_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockUserProfileService_UpdateProfile_Call) Return(_a0 user.UserProfile, _a1 error) *MockUserProfileService_UpdateProfile_Call {
+func (_c *MockUserProfileService_UpdateProfile_Call) Return(_a0 *user.UserProfile, _a1 error) *MockUserProfileService_UpdateProfile_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockUserProfileService_UpdateProfile_Call) RunAndReturn(run func(context.Context, serviceuser.UpdateProfileCommand) (user.UserProfile, error)) *MockUserProfileService_UpdateProfile_Call {
+func (_c *MockUserProfileService_UpdateProfile_Call) RunAndReturn(run func(context.Context, serviceuser.UpdateProfileCommand) (*user.UserProfile, error)) *MockUserProfileService_UpdateProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -1,14 +1,14 @@
 package user
 
 import (
-	"errors"
-	"net/http"
-
-	"github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 )
 
 const (
+	errCodeInvalidRequestBody = "INVALID_REQUEST_BODY"
+	errMsgInvalidRequestBody  = "invalid request body"
+	errUserInvalidRequestBody = "The request body is invalid"
+
 	errCodeInvalidUserID = "INVALID_USER_ID"
 	errMsgInvalidUserID  = "invalid user id"
 	errUserInvalidUserID = "The user ID is invalid"
@@ -17,13 +17,30 @@ const (
 	errMsgForbidden  = "cannot update another user's profile"
 	errUserForbidden = "You can only update your own profile"
 
-	errCodeInvalidRequestBody = "INVALID_REQUEST_BODY"
-	errMsgInvalidRequestBody  = "invalid request body"
-	errUserInvalidRequestBody = "The request body is invalid"
+	errCodeUserNotFound = "USER_NOT_FOUND"
+	errMsgUserNotFound  = "user not found"
+	errUserUserNotFound = "User not found"
 
 	errCodeInvalidBirthDate = "INVALID_BIRTH_DATE"
+	errMsgInvalidBirthDate  = "birth date must be in YYYY-MM-DD format"
 	errUserInvalidBirthDate = "Birth date must be in YYYY-MM-DD format"
+
+	errCodeInvalidGender = "INVALID_GENDER"
+	errMsgInvalidGender  = "invalid gender"
+	errUserInvalidGender = "Please select a valid gender"
+
+	errCodeInvalidDisplayName = "INVALID_DISPLAY_NAME"
+	errMsgInvalidDisplayName  = "display name must be between 1 and 100 characters"
+	errUserInvalidDisplayName = "Display name must be between 1 and 100 characters"
 )
+
+func invalidRequestBodyDetail() handler.ErrorDetail {
+	return handler.ErrorDetail{
+		Code:        errCodeInvalidRequestBody,
+		Message:     errMsgInvalidRequestBody,
+		UserMessage: errUserInvalidRequestBody,
+	}
+}
 
 func invalidUserIDDetail() handler.ErrorDetail {
 	return handler.ErrorDetail{
@@ -41,44 +58,34 @@ func forbiddenDetail() handler.ErrorDetail {
 	}
 }
 
-func invalidRequestBodyDetail() handler.ErrorDetail {
+func userNotFoundDetail() handler.ErrorDetail {
 	return handler.ErrorDetail{
-		Code:        errCodeInvalidRequestBody,
-		Message:     errMsgInvalidRequestBody,
-		UserMessage: errUserInvalidRequestBody,
+		Code:        errCodeUserNotFound,
+		Message:     errMsgUserNotFound,
+		UserMessage: errUserUserNotFound,
 	}
 }
 
-func mapError(err error) (int, handler.ErrorDetail) {
-	switch {
-	case errors.Is(err, auth.ErrUserNotFound):
-		return http.StatusNotFound, handler.ErrorDetail{
-			Code:        "USER_NOT_FOUND",
-			Message:     err.Error(),
-			UserMessage: "User not found",
-		}
-	case errors.Is(err, auth.ErrInvalidBirthDate):
-		return http.StatusBadRequest, handler.ErrorDetail{
-			Code:        errCodeInvalidBirthDate,
-			Message:     err.Error(),
-			UserMessage: errUserInvalidBirthDate,
-		}
-	case errors.Is(err, auth.ErrInvalidGender):
-		return http.StatusBadRequest, handler.ErrorDetail{
-			Code:        "INVALID_GENDER",
-			Message:     err.Error(),
-			UserMessage: "Please select a valid gender",
-		}
-	case errors.Is(err, auth.ErrInvalidDisplayName):
-		return http.StatusBadRequest, handler.ErrorDetail{
-			Code:        "INVALID_DISPLAY_NAME",
-			Message:     err.Error(),
-			UserMessage: "Display name must be between 1 and 100 characters",
-		}
-	default:
-		return http.StatusInternalServerError, handler.ErrorDetail{
-			Code:    "INTERNAL_ERROR",
-			Message: err.Error(),
-		}
+func invalidBirthDateDetail() handler.ErrorDetail {
+	return handler.ErrorDetail{
+		Code:        errCodeInvalidBirthDate,
+		Message:     errMsgInvalidBirthDate,
+		UserMessage: errUserInvalidBirthDate,
+	}
+}
+
+func invalidGenderDetail() handler.ErrorDetail {
+	return handler.ErrorDetail{
+		Code:        errCodeInvalidGender,
+		Message:     errMsgInvalidGender,
+		UserMessage: errUserInvalidGender,
+	}
+}
+
+func invalidDisplayNameDetail() handler.ErrorDetail {
+	return handler.ErrorDetail{
+		Code:        errCodeInvalidDisplayName,
+		Message:     errMsgInvalidDisplayName,
+		UserMessage: errUserInvalidDisplayName,
 	}
 }

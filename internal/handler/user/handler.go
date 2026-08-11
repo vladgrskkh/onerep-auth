@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
+	auth "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 	userdomain "github.com/vladgrskkh/onerep-auth/internal/domain/user"
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/user/dto"
@@ -18,8 +19,8 @@ import (
 // UserProfileService is the user profile use-case contract consumed by the
 // handler.
 type UserProfileService interface {
-	GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (userdomain.UserProfile, error)
-	UpdateProfile(ctx context.Context, cmd serviceuser.UpdateProfileCommand) (userdomain.UserProfile, error)
+	GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (*userdomain.UserProfile, error)
+	UpdateProfile(ctx context.Context, cmd serviceuser.UpdateProfileCommand) (*userdomain.UserProfile, error)
 }
 
 type UserHandler struct {
@@ -42,6 +43,7 @@ func NewUserHandler(svc UserProfileService, logger *slog.Logger) *UserHandler {
 // @Success 200 {object} dto.UserProfileResponse
 // @Failure 400 {object} handler.ErrorResponse
 // @Failure 404 {object} handler.ErrorResponse
+// @Failure 500 {object} handler.ErrorResponse
 // @Security BearerAuth
 // @Router /users/{id} [get]
 func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
@@ -55,8 +57,12 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 	profile, err := h.svc.GetProfile(r.Context(), userID, requesterID)
 	if err != nil {
-		status, detail := mapError(err)
-		handler.WriteError(w, h.logger, status, detail)
+		switch {
+		case errors.Is(err, auth.ErrUserNotFound):
+			handler.WriteError(w, h.logger, http.StatusNotFound, userNotFoundDetail())
+		default:
+			handler.WriteSystemError(w, h.logger, http.StatusInternalServerError, err)
+		}
 		return
 	}
 
@@ -75,6 +81,7 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} dto.UserProfileResponse
 // @Failure 400 {object} handler.ErrorResponse
 // @Failure 403 {object} handler.ErrorResponse
+// @Failure 500 {object} handler.ErrorResponse
 // @Security BearerAuth
 // @Router /users/{id} [patch]
 func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
@@ -104,8 +111,18 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	updated, err := h.svc.UpdateProfile(r.Context(), cmd)
 	if err != nil {
-		status, detail := mapError(err)
-		handler.WriteError(w, h.logger, status, detail)
+		switch {
+		case errors.Is(err, auth.ErrUserNotFound):
+			handler.WriteError(w, h.logger, http.StatusNotFound, userNotFoundDetail())
+		case errors.Is(err, auth.ErrInvalidBirthDate):
+			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidBirthDateDetail())
+		case errors.Is(err, auth.ErrInvalidGender):
+			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidGenderDetail())
+		case errors.Is(err, auth.ErrInvalidDisplayName):
+			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidDisplayNameDetail())
+		default:
+			handler.WriteSystemError(w, h.logger, http.StatusInternalServerError, err)
+		}
 		return
 	}
 
