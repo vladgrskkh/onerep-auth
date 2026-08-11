@@ -58,6 +58,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
+                        }
                     }
                 }
             }
@@ -92,6 +98,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
@@ -141,6 +153,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
+                        }
                     }
                 }
             }
@@ -184,6 +202,12 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
@@ -233,6 +257,12 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }
@@ -289,6 +319,12 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse"
                         }

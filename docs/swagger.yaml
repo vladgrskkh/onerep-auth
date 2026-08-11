@@ -142,6 +142,10 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
       summary: Login
       tags:
       - auth
@@ -164,6 +168,10 @@ paths:
           description: No Content
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
       summary: Logout
@@ -196,6 +204,10 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
       summary: Refresh tokens
       tags:
       - auth
@@ -226,6 +238,10 @@ paths:
           description: Conflict
           schema:
             $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
       summary: Register a new user
       tags:
       - auth
@@ -253,6 +269,10 @@ paths:
             $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
       security:
@@ -289,6 +309,10 @@ paths:
             $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
         "403":
           description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_vladgrskkh_onerep-auth_internal_handler.ErrorResponse'
       security:
