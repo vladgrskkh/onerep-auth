@@ -19,8 +19,8 @@ import (
 // UserProfileService is the user profile use-case contract consumed by the
 // handler.
 type UserProfileService interface {
-	GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (userdomain.UserProfile, error)
-	UpdateProfile(ctx context.Context, cmd serviceuser.UpdateProfileCommand) (userdomain.UserProfile, error)
+	GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (*userdomain.UserProfile, error)
+	UpdateProfile(ctx context.Context, cmd serviceuser.UpdateProfileCommand) (*userdomain.UserProfile, error)
 }
 
 type UserHandler struct {

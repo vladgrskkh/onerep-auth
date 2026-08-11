@@ -9,7 +9,7 @@ import (
 )
 
 // toProfileResponse maps the domain profile to the HTTP response.
-func toProfileResponse(p userdomain.UserProfile) dto.UserProfileResponse {
+func toProfileResponse(p *userdomain.UserProfile) dto.UserProfileResponse {
 	resp := dto.UserProfileResponse{
 		ID:          p.ID,
 		DisplayName: *p.DisplayName,

@@ -25,42 +25,43 @@ func NewUserService(users UserProfileRepository) *UserService {
 	return &UserService{users: users}
 }
 
-func (s *UserService) GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (userdomain.UserProfile, error) {
+func (s *UserService) GetProfile(ctx context.Context, userID, requesterID uuid.UUID) (*userdomain.UserProfile, error) {
 	u, err := s.users.FindByID(ctx, userID)
 	if err != nil {
-		return userdomain.UserProfile{}, err
+		return nil, err
 	}
-	return userdomain.ToProfile(u, requesterID), nil
+	profile := userdomain.ToProfile(u, requesterID)
+	return &profile, nil
 }
 
 const birthDateFormat = "2006-01-02"
 
 // UpdateProfile applies the non-nil fields of the command to the stored user,
 // parsing and validating each provided value before applying it.
-func (s *UserService) UpdateProfile(ctx context.Context, cmd UpdateProfileCommand) (userdomain.UserProfile, error) {
+func (s *UserService) UpdateProfile(ctx context.Context, cmd UpdateProfileCommand) (*userdomain.UserProfile, error) {
 	u, err := s.users.FindByID(ctx, cmd.UserID)
 	if err != nil {
-		return userdomain.UserProfile{}, err
+		return nil, err
 	}
 
 	if cmd.DisplayName != nil {
 		name := strings.TrimSpace(*cmd.DisplayName)
 		if name == "" || utf8.RuneCountInString(name) > authdomain.MaxDisplayNameLength {
-			return userdomain.UserProfile{}, authdomain.ErrInvalidDisplayName
+			return nil, authdomain.ErrInvalidDisplayName
 		}
 		u.DisplayName = name
 	}
 	if cmd.Gender != nil {
 		gender := authdomain.Gender(*cmd.Gender)
 		if !gender.IsValid() {
-			return userdomain.UserProfile{}, authdomain.ErrInvalidGender
+			return nil, authdomain.ErrInvalidGender
 		}
 		u.Gender = gender
 	}
 	if cmd.BirthDate != nil {
 		birthDate, parseErr := time.Parse(birthDateFormat, *cmd.BirthDate)
 		if parseErr != nil {
-			return userdomain.UserProfile{}, authdomain.ErrInvalidBirthDate
+			return nil, authdomain.ErrInvalidBirthDate
 		}
 		u.BirthDate = &birthDate
 	}
@@ -71,8 +72,9 @@ func (s *UserService) UpdateProfile(ctx context.Context, cmd UpdateProfileComman
 	u.UpdatedAt = time.Now()
 	updated, err := s.users.Update(ctx, u)
 	if err != nil {
-		return userdomain.UserProfile{}, err
+		return nil, err
 	}
 
-	return userdomain.ToProfile(updated, cmd.UserID), nil
+	profile := userdomain.ToProfile(updated, cmd.UserID)
+	return &profile, nil
 }

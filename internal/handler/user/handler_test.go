@@ -99,7 +99,7 @@ func (s *HandlerTestSuite) TestUpdateProfile_Success() {
 		Gender:      new("female"),
 		BirthDate:   new("2000-01-02"),
 	}
-	profile := userdomain.UserProfile{
+	profile := &userdomain.UserProfile{
 		ID:          userID,
 		DisplayName: new("Alice"),
 		AvatarURL:   new("avatar.png"),
