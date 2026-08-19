@@ -21,6 +21,63 @@ func (_m *MockTokenStorer) EXPECT() *MockTokenStorer_Expecter {
 	return &MockTokenStorer_Expecter{mock: &_m.Mock}
 }
 
+// Consume provides a mock function with given fields: ctx, token
+func (_m *MockTokenStorer) Consume(ctx context.Context, token string) (string, error) {
+	ret := _m.Called(ctx, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Consume")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
+		return rf(ctx, token)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
+		r0 = rf(ctx, token)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, token)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockTokenStorer_Consume_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Consume'
+type MockTokenStorer_Consume_Call struct {
+	*mock.Call
+}
+
+// Consume is a helper method to define mock.On call
+//   - ctx context.Context
+//   - token string
+func (_e *MockTokenStorer_Expecter) Consume(ctx interface{}, token interface{}) *MockTokenStorer_Consume_Call {
+	return &MockTokenStorer_Consume_Call{Call: _e.mock.On("Consume", ctx, token)}
+}
+
+func (_c *MockTokenStorer_Consume_Call) Run(run func(ctx context.Context, token string)) *MockTokenStorer_Consume_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockTokenStorer_Consume_Call) Return(_a0 string, _a1 error) *MockTokenStorer_Consume_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockTokenStorer_Consume_Call) RunAndReturn(run func(context.Context, string) (string, error)) *MockTokenStorer_Consume_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Delete provides a mock function with given fields: ctx, token
 func (_m *MockTokenStorer) Delete(ctx context.Context, token string) error {
 	ret := _m.Called(ctx, token)
@@ -64,63 +121,6 @@ func (_c *MockTokenStorer_Delete_Call) Return(_a0 error) *MockTokenStorer_Delete
 }
 
 func (_c *MockTokenStorer_Delete_Call) RunAndReturn(run func(context.Context, string) error) *MockTokenStorer_Delete_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Get provides a mock function with given fields: ctx, token
-func (_m *MockTokenStorer) Get(ctx context.Context, token string) (string, error) {
-	ret := _m.Called(ctx, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Get")
-	}
-
-	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
-		return rf(ctx, token)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
-		r0 = rf(ctx, token)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, token)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockTokenStorer_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
-type MockTokenStorer_Get_Call struct {
-	*mock.Call
-}
-
-// Get is a helper method to define mock.On call
-//   - ctx context.Context
-//   - token string
-func (_e *MockTokenStorer_Expecter) Get(ctx interface{}, token interface{}) *MockTokenStorer_Get_Call {
-	return &MockTokenStorer_Get_Call{Call: _e.mock.On("Get", ctx, token)}
-}
-
-func (_c *MockTokenStorer_Get_Call) Run(run func(ctx context.Context, token string)) *MockTokenStorer_Get_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *MockTokenStorer_Get_Call) Return(_a0 string, _a1 error) *MockTokenStorer_Get_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockTokenStorer_Get_Call) RunAndReturn(run func(context.Context, string) (string, error)) *MockTokenStorer_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
