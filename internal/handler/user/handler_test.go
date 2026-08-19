@@ -2,6 +2,7 @@ package user_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -122,6 +123,21 @@ func (s *HandlerTestSuite) TestUpdateProfile_Success() {
 	s.Equal("Alice", resp.DisplayName)
 	s.Equal("female", resp.Gender)
 	s.svc.AssertCalled(s.T(), "UpdateProfile", mock.Anything, cmd)
+}
+
+func (s *HandlerTestSuite) TestUpdateProfile_WrappedSentinelPreservesSystemMessage() {
+	userID := uuid.Must(uuid.NewV7())
+	wrappedErr := fmt.Errorf("persist profile: %w", authdomain.ErrInvalidGender)
+	s.svc.EXPECT().
+		UpdateProfile(mock.Anything, mock.Anything).
+		Return(nil, wrappedErr)
+
+	w := s.patch(userID, `{"gender":"female"}`)
+
+	s.Equal(http.StatusBadRequest, w.Code)
+	resp := s.decodeError(w)
+	s.Equal("INVALID_GENDER", string(resp.Error.Code))
+	s.Equal(wrappedErr.Error(), resp.Error.Message)
 }
 
 func TestHandlerSuite(t *testing.T) {

@@ -15,11 +15,17 @@ type TokenData struct {
 }
 
 type TokenStore struct {
-	client *redis.Client
+	client redisClient
 	ttl    time.Duration
 }
 
-func NewTokenStore(client *redis.Client, ttl time.Duration) *TokenStore {
+type redisClient interface {
+	Set(ctx context.Context, key string, value any, expiration time.Duration) *redis.StatusCmd
+	GetDel(ctx context.Context, key string) *redis.StringCmd
+	Del(ctx context.Context, keys ...string) *redis.IntCmd
+}
+
+func NewTokenStore(client redisClient, ttl time.Duration) *TokenStore {
 	return &TokenStore{client: client, ttl: ttl}
 }
 

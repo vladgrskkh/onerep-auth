@@ -2,6 +2,7 @@ package auth_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	authdomain "github.com/vladgrskkh/onerep-auth/internal/domain/auth"
 	"github.com/vladgrskkh/onerep-auth/internal/handler"
 	"github.com/vladgrskkh/onerep-auth/internal/handler/auth"
 	authmocks "github.com/vladgrskkh/onerep-auth/internal/handler/auth/mocks"
@@ -93,6 +95,26 @@ func (s *HandlerTestSuite) TestRegister_Success() {
 
 	s.Equal(http.StatusCreated, w.Code)
 	s.svc.AssertCalled(s.T(), "Register", mock.Anything, cmd)
+}
+
+func (s *HandlerTestSuite) TestLogin_WrappedSentinelPreservesSystemMessage() {
+	wrappedErr := fmt.Errorf("authenticate user: %w", authdomain.ErrInvalidCredentials)
+	s.svc.EXPECT().
+		Login(mock.Anything, authsvc.LoginCommand{Email: "a@b.com", Password: "password123"}).
+		Return(jwtsvc.TokenPair{}, wrappedErr)
+
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/v1/auth/login",
+		strings.NewReader(`{"email":"a@b.com","password":"password123"}`),
+	)
+	w := httptest.NewRecorder()
+	s.handler.Login(w, req)
+
+	s.Equal(http.StatusUnauthorized, w.Code)
+	resp := s.decodeError(w)
+	s.Equal("INVALID_CREDENTIALS", string(resp.Error.Code))
+	s.Equal(wrappedErr.Error(), resp.Error.Message)
 }
 
 func TestHandlerSuite(t *testing.T) {

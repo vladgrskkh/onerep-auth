@@ -59,7 +59,7 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, auth.ErrUserNotFound):
-			handler.WriteError(w, h.logger, http.StatusNotFound, userNotFoundDetail())
+			handler.WriteError(w, h.logger, http.StatusNotFound, userNotFoundDetail(err))
 		default:
 			handler.WriteSystemError(w, h.logger, http.StatusInternalServerError, err)
 		}
@@ -113,13 +113,13 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, auth.ErrUserNotFound):
-			handler.WriteError(w, h.logger, http.StatusNotFound, userNotFoundDetail())
+			handler.WriteError(w, h.logger, http.StatusNotFound, userNotFoundDetail(err))
 		case errors.Is(err, auth.ErrInvalidBirthDate):
-			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidBirthDateDetail())
+			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidBirthDateDetail(err))
 		case errors.Is(err, auth.ErrInvalidGender):
-			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidGenderDetail())
+			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidGenderDetail(err))
 		case errors.Is(err, auth.ErrInvalidDisplayName):
-			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidDisplayNameDetail())
+			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidDisplayNameDetail(err))
 		default:
 			handler.WriteSystemError(w, h.logger, http.StatusInternalServerError, err)
 		}
