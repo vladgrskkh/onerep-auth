@@ -48,57 +48,6 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.svc = auth.NewAuthService(s.userRepo, hasher, *tm, s.tokenStore)
 }
 
-type singleUseTokenStore struct {
-	mu     sync.Mutex
-	userID string
-}
-
-func newSingleUseTokenStore(userID string) *singleUseTokenStore {
-	return &singleUseTokenStore{
-		userID: userID,
-	}
-}
-
-func (s *singleUseTokenStore) Save(context.Context, string, string) error {
-	return nil
-}
-
-func (s *singleUseTokenStore) Delete(_ context.Context, _ string) error {
-	s.mu.Lock()
-	s.userID = ""
-	s.mu.Unlock()
-	return nil
-}
-
-func (s *singleUseTokenStore) Consume(_ context.Context, _ string) (string, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if s.userID == "" {
-		return "", authdomain.ErrTokenNotFound
-	}
-
-	userID := s.userID
-	s.userID = ""
-	return userID, nil
-}
-
-type refreshUserRepository struct {
-	user authdomain.User
-}
-
-func (r *refreshUserRepository) Create(context.Context, authdomain.User) (authdomain.User, error) {
-	return r.user, nil
-}
-
-func (r *refreshUserRepository) FindByEmail(context.Context, string) (authdomain.User, error) {
-	return r.user, nil
-}
-
-func (r *refreshUserRepository) FindByID(context.Context, uuid.UUID) (authdomain.User, error) {
-	return r.user, nil
-}
-
 func (s *ServiceTestSuite) TestRegister_Success() {
 	s.userRepo.EXPECT().
 		FindByEmail(mock.Anything, "test@example.com").
@@ -227,15 +176,30 @@ func (s *ServiceTestSuite) TestRefresh_TokenNotFound() {
 
 func (s *ServiceTestSuite) TestRefresh_ConcurrentRequestsConsumeTokenOnlyOnce() {
 	userID := uuid.Must(uuid.NewV7())
-	tokenStore := newSingleUseTokenStore(userID.String())
-	userRepo := &refreshUserRepository{
-		user: authdomain.User{ID: userID, Email: "refresh@example.com"},
-	}
+	var mu sync.Mutex
+	consumed := false
+	s.tokenStore.EXPECT().Consume(mock.Anything, "shared-refresh").RunAndReturn(
+		func(context.Context, string) (string, error) {
+			mu.Lock()
+			defer mu.Unlock()
+
+			if consumed {
+				return "", authdomain.ErrTokenNotFound
+			}
+			consumed = true
+			return userID.String(), nil
+		},
+	)
+	s.userRepo.EXPECT().FindByID(mock.Anything, userID).Return(
+		authdomain.User{ID: userID, Email: "refresh@example.com"}, nil,
+	).Once()
+	s.tokenStore.EXPECT().Save(mock.Anything, mock.Anything, userID.String()).Return(nil).Once()
+
 	svc := auth.NewAuthService(
-		userRepo,
+		s.userRepo,
 		*crypto.NewPasswordHasher(),
 		s.tokenManager,
-		tokenStore,
+		s.tokenStore,
 	)
 
 	errs := make(chan error, 2)
