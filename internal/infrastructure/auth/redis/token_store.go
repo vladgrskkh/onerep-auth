@@ -32,9 +32,9 @@ func (s *TokenStore) Save(ctx context.Context, token string, userID string) erro
 	return s.client.Set(ctx, key, data, s.ttl).Err()
 }
 
-func (s *TokenStore) Get(ctx context.Context, token string) (string, error) {
+func (s *TokenStore) Consume(ctx context.Context, token string) (string, error) {
 	key := refreshKey(token)
-	data, err := s.client.Get(ctx, key).Bytes()
+	data, err := s.client.GetDel(ctx, key).Bytes()
 	if errors.Is(err, redis.Nil) {
 		return "", fmt.Errorf("token not found")
 	}

@@ -18,19 +18,15 @@ const (
 	errUserForbidden = "You can only update your own profile"
 
 	errCodeUserNotFound = "USER_NOT_FOUND"
-	errMsgUserNotFound  = "user not found"
 	errUserUserNotFound = "User not found"
 
 	errCodeInvalidBirthDate = "INVALID_BIRTH_DATE"
-	errMsgInvalidBirthDate  = "birth date must be in YYYY-MM-DD format"
 	errUserInvalidBirthDate = "Birth date must be in YYYY-MM-DD format"
 
 	errCodeInvalidGender = "INVALID_GENDER"
-	errMsgInvalidGender  = "invalid gender"
 	errUserInvalidGender = "Please select a valid gender"
 
 	errCodeInvalidDisplayName = "INVALID_DISPLAY_NAME"
-	errMsgInvalidDisplayName  = "display name must be between 1 and 100 characters"
 	errUserInvalidDisplayName = "Display name must be between 1 and 100 characters"
 )
 
@@ -58,34 +54,34 @@ func forbiddenDetail() handler.ErrorDetail {
 	}
 }
 
-func userNotFoundDetail() handler.ErrorDetail {
+func userNotFoundDetail(err error) handler.ErrorDetail {
 	return handler.ErrorDetail{
 		Code:        errCodeUserNotFound,
-		Message:     errMsgUserNotFound,
+		Message:     err.Error(),
 		UserMessage: errUserUserNotFound,
 	}
 }
 
-func invalidBirthDateDetail() handler.ErrorDetail {
+func invalidBirthDateDetail(err error) handler.ErrorDetail {
 	return handler.ErrorDetail{
 		Code:        errCodeInvalidBirthDate,
-		Message:     errMsgInvalidBirthDate,
+		Message:     err.Error(),
 		UserMessage: errUserInvalidBirthDate,
 	}
 }
 
-func invalidGenderDetail() handler.ErrorDetail {
+func invalidGenderDetail(err error) handler.ErrorDetail {
 	return handler.ErrorDetail{
 		Code:        errCodeInvalidGender,
-		Message:     errMsgInvalidGender,
+		Message:     err.Error(),
 		UserMessage: errUserInvalidGender,
 	}
 }
 
-func invalidDisplayNameDetail() handler.ErrorDetail {
+func invalidDisplayNameDetail(err error) handler.ErrorDetail {
 	return handler.ErrorDetail{
 		Code:        errCodeInvalidDisplayName,
-		Message:     errMsgInvalidDisplayName,
+		Message:     err.Error(),
 		UserMessage: errUserInvalidDisplayName,
 	}
 }

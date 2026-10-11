@@ -18,7 +18,7 @@ type UserRepository interface {
 
 type TokenStorer interface {
 	Save(ctx context.Context, token string, userID string) error
-	Get(ctx context.Context, token string) (string, error)
+	Consume(ctx context.Context, token string) (string, error)
 	Delete(ctx context.Context, token string) error
 }
 
@@ -110,13 +110,9 @@ func (s *AuthService) Logout(ctx context.Context, cmd LogoutCommand) error {
 }
 
 func (s *AuthService) Refresh(ctx context.Context, cmd RefreshCommand) (TokenPair, error) {
-	userIDStr, err := s.tokenStore.Get(ctx, cmd.RefreshToken)
+	userIDStr, err := s.tokenStore.Consume(ctx, cmd.RefreshToken)
 	if err != nil {
 		return TokenPair{}, authdomain.ErrTokenNotFound
-	}
-
-	if delErr := s.tokenStore.Delete(ctx, cmd.RefreshToken); delErr != nil {
-		return TokenPair{}, delErr
 	}
 
 	userID, err := uuid.Parse(userIDStr)

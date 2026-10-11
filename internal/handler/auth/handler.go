@@ -63,13 +63,13 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, authdomain.ErrEmailAlreadyExists):
-			handler.WriteError(w, h.logger, http.StatusConflict, emailAlreadyExistsDetail())
+			handler.WriteError(w, h.logger, http.StatusConflict, emailAlreadyExistsDetail(err))
 		case errors.Is(err, authdomain.ErrInvalidEmail):
-			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidEmailDetail())
+			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidEmailDetail(err))
 		case errors.Is(err, authdomain.ErrInvalidPassword):
-			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidPasswordDetail())
+			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidPasswordDetail(err))
 		case errors.Is(err, authdomain.ErrInvalidDisplayName):
-			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidDisplayNameDetail())
+			handler.WriteError(w, h.logger, http.StatusBadRequest, invalidDisplayNameDetail(err))
 		default:
 			handler.WriteSystemError(w, h.logger, http.StatusInternalServerError, err)
 		}
@@ -110,7 +110,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, authdomain.ErrInvalidCredentials):
-			handler.WriteError(w, h.logger, http.StatusUnauthorized, invalidCredentialsDetail())
+			handler.WriteError(w, h.logger, http.StatusUnauthorized, invalidCredentialsDetail(err))
 		default:
 			handler.WriteSystemError(w, h.logger, http.StatusInternalServerError, err)
 		}
@@ -179,7 +179,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, authdomain.ErrTokenNotFound):
-			handler.WriteError(w, h.logger, http.StatusUnauthorized, tokenNotFoundDetail())
+			handler.WriteError(w, h.logger, http.StatusUnauthorized, tokenNotFoundDetail(err))
 		default:
 			handler.WriteSystemError(w, h.logger, http.StatusInternalServerError, err)
 		}

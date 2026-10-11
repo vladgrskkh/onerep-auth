@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -22,9 +24,10 @@ import (
 type ServiceTestSuite struct {
 	suite.Suite
 
-	svc        *auth.AuthService
-	userRepo   *authmocks.MockUserRepository
-	tokenStore *authmocks.MockTokenStorer
+	svc          *auth.AuthService
+	userRepo     *authmocks.MockUserRepository
+	tokenStore   *authmocks.MockTokenStorer
+	tokenManager jwtsvc.TokenManager
 }
 
 func (s *ServiceTestSuite) SetupTest() {
@@ -36,6 +39,7 @@ func (s *ServiceTestSuite) SetupTest() {
 
 	tm, err := jwtsvc.NewTokenManager(string(privPEM), 15*time.Minute)
 	s.Require().NoError(err)
+	s.tokenManager = *tm
 
 	s.userRepo = authmocks.NewMockUserRepository(s.T())
 	s.tokenStore = authmocks.NewMockTokenStorer(s.T())
@@ -152,8 +156,7 @@ func (s *ServiceTestSuite) TestLogout_Success() {
 func (s *ServiceTestSuite) TestRefresh_Success() {
 	userID := uuid.Must(uuid.NewV7())
 
-	s.tokenStore.EXPECT().Get(mock.Anything, "valid-refresh").Return(userID.String(), nil)
-	s.tokenStore.EXPECT().Delete(mock.Anything, "valid-refresh").Return(nil)
+	s.tokenStore.EXPECT().Consume(mock.Anything, "valid-refresh").Return(userID.String(), nil)
 	s.userRepo.EXPECT().
 		FindByID(mock.Anything, userID).
 		Return(authdomain.User{ID: userID, Email: "refresh@example.com"}, nil)
@@ -165,10 +168,58 @@ func (s *ServiceTestSuite) TestRefresh_Success() {
 }
 
 func (s *ServiceTestSuite) TestRefresh_TokenNotFound() {
-	s.tokenStore.EXPECT().Get(mock.Anything, "expired-refresh").Return("", authdomain.ErrTokenNotFound)
+	s.tokenStore.EXPECT().Consume(mock.Anything, "expired-refresh").Return("", authdomain.ErrTokenNotFound)
 
 	_, err := s.svc.Refresh(context.Background(), auth.RefreshCommand{RefreshToken: "expired-refresh"})
 	s.ErrorIs(err, authdomain.ErrTokenNotFound)
+}
+
+func (s *ServiceTestSuite) TestRefresh_ConcurrentRequestsConsumeTokenOnlyOnce() {
+	userID := uuid.Must(uuid.NewV7())
+	var mu sync.Mutex
+	consumed := false
+	s.tokenStore.EXPECT().Consume(mock.Anything, "shared-refresh").RunAndReturn(
+		func(context.Context, string) (string, error) {
+			mu.Lock()
+			defer mu.Unlock()
+
+			if consumed {
+				return "", authdomain.ErrTokenNotFound
+			}
+			consumed = true
+			return userID.String(), nil
+		},
+	)
+	s.userRepo.EXPECT().FindByID(mock.Anything, userID).Return(
+		authdomain.User{ID: userID, Email: "refresh@example.com"}, nil,
+	).Once()
+	s.tokenStore.EXPECT().Save(mock.Anything, mock.Anything, userID.String()).Return(nil).Once()
+
+	svc := auth.NewAuthService(
+		s.userRepo,
+		*crypto.NewPasswordHasher(),
+		s.tokenManager,
+		s.tokenStore,
+	)
+
+	errs := make(chan error, 2)
+	for range 2 {
+		go func() {
+			_, err := svc.Refresh(context.Background(), auth.RefreshCommand{RefreshToken: "shared-refresh"})
+			errs <- err
+		}()
+	}
+
+	var notFound int
+	for range 2 {
+		if err := <-errs; errors.Is(err, authdomain.ErrTokenNotFound) {
+			notFound++
+		} else {
+			s.Require().NoError(err)
+		}
+	}
+
+	s.Equal(1, notFound)
 }
 
 func TestServiceSuite(t *testing.T) {

@@ -10,23 +10,18 @@ const (
 	errUserInvalidRequestBody = "The request body is invalid"
 
 	errCodeEmailAlreadyExists = "EMAIL_ALREADY_EXISTS"
-	errMsgEmailAlreadyExists  = "email already exists"
 	errUserEmailAlreadyExists = "An account with this email already exists"
 
 	errCodeInvalidEmail = "INVALID_EMAIL"
-	errMsgInvalidEmail  = "email is required"
 	errUserInvalidEmail = "Please enter a valid email address"
 
 	errCodeInvalidPassword = "INVALID_PASSWORD"
-	errMsgInvalidPassword  = "password must be at least 8 characters"
 	errUserInvalidPassword = "Password must be at least 8 characters long"
 
 	errCodeInvalidDisplayName = "INVALID_DISPLAY_NAME"
-	errMsgInvalidDisplayName  = "display name must be between 1 and 100 characters"
 	errUserInvalidDisplayName = "Display name must be between 1 and 100 characters"
 
 	errCodeTokenNotFound = "TOKEN_NOT_FOUND"
-	errMsgTokenNotFound  = "refresh token not found or expired"
 	errUserTokenNotFound = "Your session has expired, please log in again"
 )
 
@@ -38,50 +33,50 @@ func invalidRequestBodyDetail() handler.ErrorDetail {
 	}
 }
 
-func invalidCredentialsDetail() handler.ErrorDetail {
+func invalidCredentialsDetail(err error) handler.ErrorDetail {
 	return handler.ErrorDetail{
 		Code:        "INVALID_CREDENTIALS",
-		Message:     "invalid credentials",
+		Message:     err.Error(),
 		UserMessage: "The email or password you entered is incorrect",
 	}
 }
 
-func emailAlreadyExistsDetail() handler.ErrorDetail {
+func emailAlreadyExistsDetail(err error) handler.ErrorDetail {
 	return handler.ErrorDetail{
 		Code:        errCodeEmailAlreadyExists,
-		Message:     errMsgEmailAlreadyExists,
+		Message:     err.Error(),
 		UserMessage: errUserEmailAlreadyExists,
 	}
 }
 
-func invalidEmailDetail() handler.ErrorDetail {
+func invalidEmailDetail(err error) handler.ErrorDetail {
 	return handler.ErrorDetail{
 		Code:        errCodeInvalidEmail,
-		Message:     errMsgInvalidEmail,
+		Message:     err.Error(),
 		UserMessage: errUserInvalidEmail,
 	}
 }
 
-func invalidPasswordDetail() handler.ErrorDetail {
+func invalidPasswordDetail(err error) handler.ErrorDetail {
 	return handler.ErrorDetail{
 		Code:        errCodeInvalidPassword,
-		Message:     errMsgInvalidPassword,
+		Message:     err.Error(),
 		UserMessage: errUserInvalidPassword,
 	}
 }
 
-func invalidDisplayNameDetail() handler.ErrorDetail {
+func invalidDisplayNameDetail(err error) handler.ErrorDetail {
 	return handler.ErrorDetail{
 		Code:        errCodeInvalidDisplayName,
-		Message:     errMsgInvalidDisplayName,
+		Message:     err.Error(),
 		UserMessage: errUserInvalidDisplayName,
 	}
 }
 
-func tokenNotFoundDetail() handler.ErrorDetail {
+func tokenNotFoundDetail(err error) handler.ErrorDetail {
 	return handler.ErrorDetail{
 		Code:        errCodeTokenNotFound,
-		Message:     errMsgTokenNotFound,
+		Message:     err.Error(),
 		UserMessage: errUserTokenNotFound,
 	}
 }
